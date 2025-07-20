@@ -1,0 +1,180 @@
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(100%) scale(0.9);
+  }
+}
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 380px; /* Adjusted width slightly */
+  z-index: 9999;
+  pointer-events: none;
+  transition: height 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.toast {
+  width: 100%;
+  background: #ffffff; /* Light background */
+  color: #1f2937; /* Darker text color */
+  border: 1px solid #e5e7eb; /* Light border */
+  border-radius: 8px;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1); /* Softer shadow */
+  padding: 16px;
+  cursor: default;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  opacity: 0;
+
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  box-sizing: border-box;
+  pointer-events: all;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.toast.entering {
+  animation: toast-enter 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.toast.exiting {
+  animation: toast-exit 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  pointer-events: none; /* Disable interaction during exit */
+}
+
+/* Structure within the toast */
+.toast-icon {
+  flex-shrink: 0;
+  width: 24px; /* Adjusted icon size */
+  height: 24px; /* Adjusted icon size */
+  margin-top: 0px; /* Align with title */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Icon will be an SVG or text character */
+}
+
+.toast-main-content {
+  /* New wrapper for title and description */
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px; /* Reduced gap for closer title/description */
+}
+
+.toast-header {
+  /* New wrapper for icon, title and timestamp */
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Pushes timestamp to the right */
+  width: 95%;
+}
+
+.toast-title-icon-wrapper {
+  /* Groups icon and title */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast-title {
+  font-weight: 600; /* Bolder title */
+  font-size: 1rem; /* 16px */
+  color: #111827; /* Even darker for title */
+  line-height: 1.4; /* Adjusted line height */
+}
+
+.toast-timestamp {
+  font-size: 0.75rem; /* 12px */
+  color: #6b7280; /* Gray color for timestamp */
+  margin-left: auto; /* Pushes to the right of the title area */
+  padding-left: 8px; /* Space from title */
+  white-space: nowrap;
+}
+
+.toast-description {
+  font-size: 0.875rem; /* 14px */
+  color: #4b5563; /* Slightly lighter than title, but still dark */
+  line-height: 1.5;
+  margin-top: 4px; /* Space below the title/header */
+  padding-left: 36px; /* Align with title if icon is present, adjust as needed if icon is part of title wrapper */
+}
+
+.toast-close-button {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: #9ca3af; /* Lighter gray for X */
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-size: 22px; /* Larger X */
+  line-height: 1;
+  opacity: 0.7;
+  transition:
+    opacity 0.2s ease-in-out,
+    color 0.2s ease-in-out;
+  position: absolute; /* Position relative to toast */
+  top: 12px; /* Adjust for vertical alignment */
+  right: 12px; /* Adjust for horizontal alignment */
+}
+
+.toast-close-button:hover {
+  opacity: 1;
+  color: #4b5563; /* Darker on hover */
+}
+
+/* Different Toast Types (Example: Success) */
+.toast.toast-success .toast-icon svg {
+  color: #10b981; /* Green for success icon */
+}
+/* Add more types: .toast-error, .toast-warning, .toast-info, .toast-loading */
+
+/* Styles for stacked toasts (primarily handled by JS transforms, but good to have a class) */
+/* .toast.stacked is implicitly handled by JS setting transform/opacity directly */
+
+/* Remove old styles that might conflict if they exist */
+/* .toast.expanded, .toast.dismiss (old animation names) */
+/* Ensure no old .toast.stacked styles conflict with direct JS manipulation of bottom/transform */

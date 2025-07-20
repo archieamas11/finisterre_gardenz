@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cemetery Popup Templates Test</title>
+</head>
+<body>
+    <h1>Testing Cemetery Popup Templates</h1>
+    <div id="test-output"></div>
+
+    <script>
+        // Mock the global variables that templates depend on
+        window.userType = 'admin';
+        window.autolinker = {
+            link: function(text) {
+                return text; // Simple mock that just returns the text
+            }
+        };
+    </script>
+
+    <script src="../assets/js/map/cemetery-popup-templates.js"></script>
+
+    <script>
+        // Test the template functions
+        const testFeature = {
+            properties: {
+                'Status': 'occupied',
+                'DeceasedCount': 1,
+                'Visibility': 'public',
+                'Name': 'John Doe',
+                'Block': 'A',
+                'Grave No.': '123',
+                'Birth': '1950-01-01',
+                'Death': '2020-12-31',
+                'Years Buried': '5 years',
+                'PhotoCount': 0,
+                'id': '1'
+            },
+            geometry: {
+                coordinates: [123.123, 10.123]
+            }
+        };
+
+        try {
+            const template = getPopupTemplate(testFeature);
+            document.getElementById('test-output').innerHTML = template;
+            console.log('✅ Cemetery popup templates loaded successfully!');
+        } catch (error) {
+            console.error('❌ Error loading templates:', error);
+            document.getElementById('test-output').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+    </script>
+</body>
+</html>

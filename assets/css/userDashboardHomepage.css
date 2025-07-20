@@ -1,0 +1,37 @@
+.memorial-card {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+}
+
+.memorial-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.memorial-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.add-memorial-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
+}
+
+.add-memorial-card:hover {
+  background-color: #f1f3f5;
+  border-color: #adb5bd !important;
+}
+
+.image-upload-container {
+  cursor: pointer;
+}
+
+.image-upload-container:hover .add-icon {
+  color: #0d6efd !important;
+}

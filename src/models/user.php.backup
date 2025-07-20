@@ -1,0 +1,122 @@
+<?php
+class User {
+    private $db;
+
+    public function __construct() {
+        $this->db = new Database;
+    }
+
+    // Generate password reset token and save it
+    public function generatePasswordResetToken($email) {
+        $token = bin2hex(random_bytes(50));
+        $expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
+
+        $this->db->query('UPDATE users SET reset_token = :token, reset_token_expiry = :expiry WHERE email = :email');
+        $this->db->bind(':token', $token);
+        $this->db->bind(':expiry', $expiry);
+        $this->db->bind(':email', $email);
+
+        if($this->db->execute()) {
+            return $token;
+        }
+        return false;
+    }
+
+    // Verify reset token and check expiry
+    public function verifyResetToken($token) {
+        $this->db->query('SELECT * FROM users WHERE reset_token = :token AND reset_token_expiry > NOW()');
+        $this->db->bind(':token', $token);
+
+        $row = $this->db->single();
+        return $this->db->rowCount() > 0 ? $row : false;
+    }
+
+    // Reset password and clear reset token
+    public function resetPassword($token, $password) {
+        $this->db->query('UPDATE users SET password = :password, reset_token = NULL, reset_token_expiry = NULL WHERE reset_token = :token');
+        $this->db->bind(':password', $password);
+        $this->db->bind(':token', $token);
+
+        return $this->db->execute();
+    }
+
+    // Register user
+    public function register($data, $token) {
+        // Prepare query
+        $this->db->query('INSERT INTO users (first_name, last_name, email, password, token, role, status) 
+            VALUES(:first_name, :last_name, :email, :password, :token, :role, :status)');
+        
+        // Bind values
+        $this->db->bind(':first_name', $data['fname']);
+        $this->db->bind(':last_name', $data['lname']);
+        $this->db->bind(':email', $data['email']);
+        $this->db->bind(':password', $data['password']);
+        $this->db->bind(':token', $token);
+        $this->db->bind(':role', 'user');
+        $this->db->bind(':status', 'pending');
+
+        // Execute
+        if($this->db->execute()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    // Find user by email
+    public function findUserByEmail($email) {
+        $this->db->query('SELECT * FROM users WHERE email = :email');
+        $this->db->bind(':email', $email);
+
+        $row = $this->db->single();
+
+        // Check row
+        if($this->db->rowCount() > 0) {
+            return $row;
+        } else {
+            return false;
+        }
+    }
+
+    public function findUserByNickanme($nickname) {
+        $this->db->query('SELECT * FROM users WHERE nickname = :nickname');
+        $this->db->bind(':nickname', $nickname);
+
+        $row = $this->db->single();
+        // Check row
+        if($this->db->rowCount() > 0) {
+            return $row;
+        } else {
+            return false;
+        }
+    }
+
+    // Confirm user
+    public function confirmUser($token) {
+        try {
+            // First check if token exists and is valid
+            $this->db->query('SELECT id FROM users WHERE token = :token AND status = "pending"');
+            $this->db->bind(':token', $token);
+            
+            $user = $this->db->single();
+            if(!$user) {
+                error_log('No pending user found with token: ' . $token);
+                return false;
+            }
+
+            // Update user status and clear token
+            $this->db->query('UPDATE users SET status = "active", token = NULL WHERE token = :token');
+            $this->db->bind(':token', $token);
+
+            // Execute and check result
+            $result = $this->db->execute();
+            if (!$result) {
+                error_log('Failed to update user status for token: ' . $token);
+            }
+            return $result;
+        } catch (Exception $e) {
+            error_log('Error in confirmUser: ' . $e->getMessage());
+            return false;
+        }
+    }
+}

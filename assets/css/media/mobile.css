@@ -1,0 +1,248 @@
+/* Mobile phones */
+@media (max-width: 500px) {
+  .container-hero {
+    margin-top: 6rem;
+  }
+
+  header {
+    padding: 0 20px;
+  }
+
+  .right {
+    display: none;
+    box-shadow: none;
+  }
+
+  .faqs-content {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .faqs-content .left-image {
+    width: 90%;
+    padding: 0;
+    margin-bottom: 1rem;
+    margin: 0 auto;
+  }
+
+  .faqs-content .right-text {
+    width: 100%;
+    padding: 0 1rem;
+  }
+
+  .left {
+    width: 100%;
+    padding: 0 1rem;
+  }
+
+  .hero h1,
+  .section-title {
+    font-size: 2rem;
+  }
+
+  .cta-buttons {
+    gap: 0.5rem;
+    flex-direction: column;
+  }
+
+  .cta-buttons a {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    min-width: 160px;
+  }
+
+  .cta-buttons .view-map-btn,
+  .cta-buttons .register-btn {
+    width: 100%;
+    max-width: 220px;
+    max-height: fit-content;
+  }
+
+  .btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .scroll-indicator {
+    display: none;
+  }
+
+  .stats-grid {
+    margin-top: 3rem;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .stat-value {
+    font-size: 1.8rem;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+  }
+}
+
+/* Medium mobile phones */
+@media (max-width: 501px) {
+  .container-hero {
+    margin-top: 5rem;
+    width: 85%;
+  }
+
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+
+  .section-title {
+    font-size: 2.25rem;
+  }
+
+  .cta-buttons {
+    gap: 0.75rem;
+  }
+
+  .cta-buttons a {
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+  }
+
+  .scroll-indicator {
+    bottom: 1.5rem;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 375px) {
+  .cta-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cta-buttons .view-map-btn,
+  .cta-buttons .register-btn {
+    width: 100%;
+    max-width: 200px;
+    max-height: fit-content;
+  }
+
+  .btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    min-width: 140px;
+  }
+
+  .scroll-indicator {
+    display: none;
+  }
+
+  .stats-grid {
+    margin-top: 2rem;
+    gap: 1.5rem;
+  }
+
+  .stat-value {
+    font-size: 1.6rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+  }
+
+  .hero h1,
+  .section-title {
+    font-size: 1.75rem;
+    line-height: 1.3;
+  }
+
+  .hero p {
+    font-size: 0.9rem;
+    padding: 0 1rem;
+  }
+
+  .container-hero {
+    width: 90%;
+    margin-top: 5rem;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 320px) {
+  .container-hero {
+    width: 95%;
+    margin-top: 4rem;
+  }
+
+  .hero h1,
+  .section-title {
+    font-size: 1.5rem;
+    line-height: 1.4;
+  }
+
+  .hero p {
+    font-size: 0.875rem;
+    padding: 0 0.5rem;
+  }
+
+  .cta-buttons a {
+    font-size: 0.8rem;
+    padding: 0.625rem 1rem;
+    min-width: 120px;
+  }
+
+  .stats-grid {
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+  }
+}
+
+/* Landscape orientation for mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .hero {
+    height: 100vh;
+    padding: 2rem 0;
+  }
+
+  .container-hero {
+    margin-top: 2rem;
+    width: 90%;
+  }
+
+  .hero h1 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .hero p {
+    font-size: 0.875rem;
+    margin: 1rem auto;
+  }
+
+  .cta-buttons {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .scroll-indicator {
+    bottom: 1rem;
+  }
+}

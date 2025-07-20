@@ -1,0 +1,55 @@
+.modal-content,
+.modal-content {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  background: #f8f9fa;
+}
+
+[id^="view-customer-"] .modal-body,
+[id^="view-information-"] .modal-body,
+.modal-body {
+  padding: 2rem;
+}
+
+[id^="view-customer-"] .modal-body .col-md-3 p,
+[id^="view-customer-"] .modal-body .col-md-6 p,
+[id^="view-customer-"] .modal-body .form-label,
+[id^="view-information-"] .modal-body .col-md-4 p,
+[id^="view-information-"] .modal-body .col-md-4 p,
+[id^="view-information-"] .modal-body .form-label,
+[id^="view-deceased-"] .modal-body .col-md-6 p,
+[id^="view-deceased-"] .modal-body .col-md-6 p,
+[id^="view-deceased-"] .modal-body .form-label {
+  margin-bottom: 0.5rem;
+  padding: 0.8rem 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+[id^="view-customer-"] .col-md-3 span,
+[id^="view-information-"] .col-md-4 span {
+  color: #6c757d;
+  font-weight: 400;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .contact-item {
+    font-size: 14px;
+  }
+
+  .contact-item i {
+    font-size: 14px;
+  }
+}

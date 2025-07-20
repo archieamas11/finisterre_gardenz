@@ -1,0 +1,173 @@
+.popup {
+  max-width: 420px;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.popup-header {
+  padding: 15px 20px;
+  background-color: #435ebe;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  border-top-right-radius: 10px;
+  border-top-left-radius: 10px;
+}
+
+.popup-title {
+  margin: 0;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.seperator {
+  height: 1px;
+  background-color: rgba(0, 0, 0, 0.123);
+  margin: 10px 0;
+  width: 100%;
+}
+
+.popup-title1 {
+  font-size: 12px;
+  font-weight: 200;
+}
+
+.icons-test {
+  margin-top: 10px;
+}
+
+.popup-content {
+  padding: 20px;
+}
+
+.icons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 10px;
+}
+
+.timeline-grid {
+  border-radius: 10px;
+  background-color: hsla(0, 0%, 95%, 0.699);
+  padding: 10px 20px;
+  margin-top: 10px;
+}
+
+.info-grid {
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+  background-color: hsla(0, 0%, 95%, 0.699);
+  padding: 20px;
+}
+
+.container-map {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 25px;
+}
+
+.info-label {
+  color: #666;
+}
+
+.timeline-title {
+  font-weight: bold;
+}
+
+.info-value {
+  color: #333;
+  font-weight: bold;
+}
+
+.photo-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
+  padding: 10px;
+}
+
+.grave-photo {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 4px;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.grave-photo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.close-modal {
+  position: absolute;
+  right: 25px;
+  top: 10px;
+  color: #f1f1f1;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.image-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+.deceased-list {
+  margin-top: 10px;
+}
+
+.deceased-container {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px;
+  margin: 5px 0;
+  background: #f8f9fa;
+  border-radius: 5px;
+  border-left: 3px solid #435ebe;
+}
+
+.deceased-number {
+  font-weight: bold;
+  margin-right: 10px;
+  color: #435ebe;
+}
+
+.deceased-info {
+  flex-grow: 1;
+}
+
+.deceased-name {
+  display: block;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.deceased-dates {
+  display: block;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.no-records {
+  text-align: center;
+  color: #666;
+  padding: 10px;
+}
