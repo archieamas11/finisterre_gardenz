@@ -1,12 +1,52 @@
 <?php
 
-define('DB_SERVER', 'localhost');
-define('DB_USERNAME', 'root');
-define('DB_PASSWORD', '');
-define('DB_NAME', 'cemeterease');
+// Simple dotenv loader function
+function loadEnv($path) {
+    if (!file_exists($path)) {
+        throw new Exception('.env file not found at: ' . $path);
+    }
+    
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        // Skip comments and empty lines
+        if (strpos(trim($line), '#') === 0 || trim($line) === '') {
+            continue;
+        }
+        
+        // Parse key=value pairs
+        list($key, $value) = explode('=', $line, 2);
+        $key = trim($key);
+        $value = trim($value);
+        
+        // Remove quotes if present
+        if (preg_match('/^(["\']).*\1$/', $value)) {
+            $value = substr($value, 1, -1);
+        }
+        
+        // Set environment variable if not already set
+        if (!array_key_exists($key, $_ENV)) {
+            $_ENV[$key] = $value;
+            putenv("$key=$value");
+        }
+    }
+}
+
+// Load environment variables
+loadEnv(__DIR__ . '/../.env');
+
+// Helper function to get environment variables with fallback
+function env($key, $default = null) {
+    return $_ENV[$key] ?? getenv($key) ?? $default;
+}
+
+// Database Configuration
+define('DB_SERVER', env('DB_SERVER', 'localhost'));
+define('DB_USERNAME', env('DB_USERNAME', 'root'));
+define('DB_PASSWORD', env('DB_PASSWORD', ''));
+define('DB_NAME', env('DB_NAME', 'cemeterease'));
 
 // System Name
-define('SYSTEM_NAME', 'CemeterEase');
+define('SYSTEM_NAME', env('SYSTEM_NAME', 'CemeterEase'));
 
 // Define APPROOT first as it can be used to construct WEBROOT
 define('APPROOT', dirname(__DIR__));
@@ -54,38 +94,31 @@ if (empty($base_app_path) || $base_app_path === '/' || $base_app_path === '//') 
 
 define('WEBROOT', $protocol . '://' . $host . $base_app_path);
 
-// $this_file = str_replace('\\', '/', __FILE__);
-// $doc_root = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']);
-
-// $web_root = str_replace(array($doc_root, "include/config.php"), '', $this_file);
-
-// define('WEBROOT', $web_root);
-
 // PHPMailer Configuration
-// define('EMAIL_HOST', 'smtp.gmail.com');
-// define('EMAIL_USERNAME', 'cemeterease.memorial@gmail.com');
-// define('EMAIL_PASSWORD', 'ryhw bryw bmjm tscl');
-// define('EMAIL_PORT', 587);
-// define('EMAIL_FROM', 'cemeterease.memorial@gmail.com');
+define('EMAIL_HOST', env('EMAIL_HOST', 'smtp.gmail.com'));
+define('EMAIL_USERNAME', env('EMAIL_USERNAME'));
+define('EMAIL_PASSWORD', env('EMAIL_PASSWORD'));
+define('EMAIL_PORT', env('EMAIL_PORT', 587));
+define('EMAIL_FROM', env('EMAIL_FROM'));
 
-// // Google API Configuration
-// define('GOOGLE_CLIENT_ID', '476653195318-u49fh3rogjraviievtraaa09t7sqv2v0.apps.googleusercontent.com');
-// define('GOOGLE_CLIENT_SECRET', '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');
-// define('GOOGLE_REDIRECT_URI', WEBROOT . 'login/index.php');
+// Google API Configuration
+define('GOOGLE_CLIENT_ID', env('GOOGLE_CLIENT_ID'));
+define('GOOGLE_CLIENT_SECRET', env('GOOGLE_CLIENT_SECRET'));
+define('GOOGLE_REDIRECT_URI', WEBROOT . 'login/index.php');
 
-// // Cloudinary Configuration
-// define('CLOUDINARY_CLOUD_NAME', 'djrkvgfvo');
-// define('CLOUDINARY_API_KEY', '695834455173873');
-// define('CLOUDINARY_API_SECRET', '98Des_R7jcctIfJy6yA81HPg3po');
+// Cloudinary Configuration
+define('CLOUDINARY_CLOUD_NAME', env('CLOUDINARY_CLOUD_NAME'));
+define('CLOUDINARY_API_KEY', env('CLOUDINARY_API_KEY'));
+define('CLOUDINARY_API_SECRET', env('CLOUDINARY_API_SECRET'));
 
-// // TextBee API Configuration
-// define('TEXTBEE_API_KEY', 'aef5a129-0587-45ef-8909-5946c1dea8b6');
-// define('TEXTBEE_API_URL', 'https://api.textbee.dev/api/v1/gateway/devices/6828be8fdb6bef3de8d2fd0b/send-sms');
-// define('TEXTBEE_SENDER_ID', SYSTEM_NAME);
+// TextBee API Configuration
+define('TEXTBEE_API_KEY', env('TEXTBEE_API_KEY'));
+define('TEXTBEE_API_URL', env('TEXTBEE_API_URL'));
+define('TEXTBEE_SENDER_ID', SYSTEM_NAME);
 
-// // Pusher Configuration
-// define('PUSHER_APP_ID', '2001762');
-// define('PUSHER_APP_KEY', '2b048793924fa7a65cda');
-// define('PUSHER_APP_SECRET', 'bfc53ba1baef4bb5cef7');
-// define('PUSHER_APP_CLUSTER', 'ap3');
+// Pusher Configuration
+define('PUSHER_APP_ID', env('PUSHER_APP_ID'));
+define('PUSHER_APP_KEY', env('PUSHER_APP_KEY'));
+define('PUSHER_APP_SECRET', env('PUSHER_APP_SECRET'));
+define('PUSHER_APP_CLUSTER', env('PUSHER_APP_CLUSTER', 'ap3'));
 ?>
