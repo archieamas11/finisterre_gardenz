@@ -12,11 +12,12 @@
 <body>
     <style>
         .container {
+            padding-top: 50px;
             border: solid 1px;
-            width: 400px;
+            width: 350px;
             border-radius: 8px;
             padding: 20px;
-            background-color: #bdbdbd;
+            background-color: #ffffff;
             margin: 0 auto;
         }
 
@@ -247,7 +248,6 @@
                 color: var(--silver);
                 font-size: 0.75em;
             }
-
         }
 
         .popup-header.platinum,
@@ -318,36 +318,6 @@
             transform: scale(1.1);
         }
 
-        .plot-details {
-            margin-top: 10px;
-            border-radius: 10px;
-            background-color: hsla(0, 0%, 95%, 0.699);
-            padding: 20px;
-        }
-
-        .plot-status {
-            border-radius: 10px;
-            background-color: hsla(0, 0%, 95%, 0.699);
-            padding: 10px 20px;
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .plot-status.vacant {
-            border: 1px solid var(--vacant);
-            color: #fff;
-        }
-
-        .plot-status.occupied1 {
-            border: 1px solid var(--occupied1);
-            color: #fff;
-        }
-
-        .plot-status.reserved {
-            border: 1px solid var(--reserved);
-            color: #fff;
-        }
-
         .photo-container {
             display: flex;
             flex-wrap: wrap;
@@ -404,7 +374,9 @@
                     </div>
                 </div>
                 <div class="direction-button silver">
-                    <i data-lucide="arrow-big-right" class="direction-icon"></i>
+                    <a href="" onclick="event.preventDefault();">
+                        <i data-lucide="arrow-big-right" class="direction-icon"></i>
+                    </a>
                 </div>
             </div>
         </div>

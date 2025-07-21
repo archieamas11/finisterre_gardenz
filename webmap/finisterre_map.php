@@ -319,149 +319,112 @@ function getButtons(feature) {
             </div>`;
 }
 
-function getHeader(feature) {
-    const cat = String(feature.properties['category']).toLowerCase();
-    console.log(cat);
-    const cssClass =
-        cat === 'platinum' ? 'platinum' :
-        cat === 'bronze' ? 'bronze' :
-        cat === 'silver' ? 'silver' :
-        cat === 'diamond' ? 'diamond' :
-        '';
+function getCategoryClass(category) {
+    if (!category) return '';
+    const cat = category.toString().toLowerCase();
+    return ['platinum', 'bronze', 'silver', 'diamond'].includes(cat) ? cat : '';
+}
 
+function getHeader(feature) {
+    const cssClass = getCategoryClass(feature.properties['category']);
     return `
-    <div class="popup-header ${cssClass}">
-      <div class="header-title">
-        <span class="popup-title1">Finisterre</span><br>
-        <span class="popup-title">Plot Details</span>
-      </div>
-    </div>
+        <div class="popup-header ${cssClass}">
+            <div class="header-title">
+                <span class="popup-title1">Finisterre</span> <br>
+                <span class="popup-title">Grave Details</span>
+            </div>
+        </div>
   `;
 }
 
-function empty(feature) {
+function getPopup(feature) {
     return `
         ${getHeader(feature)}
         <div class="info-grid">
-            ${getButtons(feature)}
             ${getLocationSection(feature)}
         </div>
 
         <div class="timeline-grid">
-          <center><strong>Empty</strong></center>
-        </div> <br>
+            ${getPlotStatus(feature)}
+        </div>
+
+        <div class="plot-specifications-container">
+            ${getPlotSpecifications(feature)}
+        </div>
         <hr>
         ${getPhotosSection(feature)}`;
 }
 
-//Reserved Template
-function getReservedTemplate(feature) {
-    return `
-${getHeader(feature)}
-        <div class="info-grid">
-            ${getButtons(feature)}
-            ${getLocationSection(feature)}
-        </div>
-        <div class="timeline-grid">
-            <center><strong>Reserved</strong></center>
-            <div class="icons">
-                <i class="fas fa-user"></i>
-                <span class="info-label">Lot Owner</span>
-                <span id="name" class="info-value">${feature.properties['Contact Person'] ? autolinker.link(feature.properties['Contact Person'].toLocaleString().replace(/\b\w/g, c => c.toUpperCase())) : 'N/A'}</span>
-            </div>
-        </div>   
-        <br>
-        <hr>
-        ${getPhotosSection(feature)}`;
-}
-
-function getMultipleGraveTemplate(feature) {
-    return `
-        ${getHeader(feature)}
-        <div class="info-grid">
-            ${getButtons(feature)}
-            ${getLocationSection(feature)}
-        </div>
-
-        <div class="timeline-grid"y>
-            <div class="icons">
-                <i class="fas fa-user"></i>
-                <div class="values">
-                    <span class="info-label">Interred Persons</span>
-                    <!-- Display multiple records -->
-                    <div id="recordContainer">${feature.properties['Multiple Names'] ? autolinker.link(feature.properties['Multiple Names'].toLocaleString().replace(/\b\w/g, c => c.toUpperCase())) : 'N/A'}</div>
-                </div>
-            </div>
-        </div>   
-        ${getPhotosSection(feature)}`;
-}
-
-
-function getSingleGraveTemplate(feature) {
-    return `
-        ${getHeader(feature)}
-        <div class="info-grid">
-            ${getButtons(feature)}
-            <div class="icons">
-                <i class="fas fa-user"></i>
-                <div class="values">
-                    <span class="info-label">Name</span><br>
-                    <span id="name" class="info-value">${feature.properties['Name'] ? autolinker.link(feature.properties['Name'].toLocaleString().replace(/\b\w/g, c => c.toUpperCase())) : 'N/A'}</span>
-                </div>
-            </div>
-            ${getLocationSection(feature)}
-        </div>
-        ${getTimelineSection(feature)}
-        ${getPhotosSection(feature)}`;
-}
 
 function getLocationSection(feature) {
-    const cat = String(feature.properties['category']).toLowerCase();
-    console.log(cat);
-    const cssClass =
-        cat === 'platinum' ? 'platinum' :
-        cat === 'bronze' ? 'bronze' :
-        cat === 'silver' ? 'silver' :
-        cat === 'diamond' ? 'diamond' :
-        '';
+    const cssClass = getCategoryClass(feature.properties['category']);
     return `
         <div class="icons">
-            <i class="fas fa-map-pin"></i>
             <div class="values">
+                <i class="fas fa-map-pin me-1"></i>
                 <span class="info-label">Location</span> <br>
                 <span id="block" class="info-value">Block ${feature.properties['Block'] || 'N/A'} • Grave ${feature.properties['Grave No.'] || 'N/A'}</span>
             </div>
             <div class="navigation-section">
-                <a onclick="navigateToGrave(${feature.geometry.coordinates[1]}, ${feature.geometry.coordinates[0]})" class="direction-icon ${cssClass}">
+                <a onclick="navigateToGrave(${feature.geometry.coordinates[1]}, ${feature.geometry.coordinates[0]})" class="direction-button ${cssClass}">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="#ffffff" d="M502.6 233.3L278.7 9.4c-12.5-12.5-32.8-12.5-45.4 0L9.4 233.3c-12.5 12.5-12.5 32.8 0 45.4l223.9 223.9c12.5 12.5 32.8 12.5 45.4 0l223.9-223.9c12.5-12.5 12.5-32.8 0-45.4zm-101 12.6l-84.2 77.7c-5.1 4.7-13.4 1.1-13.4-5.9V264h-96v64c0 4.4-3.6 8-8 8h-32c-4.4 0-8-3.6-8-8v-80c0-17.7 14.3-32 32-32h112v-53.7c0-7 8.3-10.6 13.4-5.9l84.2 77.7c3.4 3.2 3.4 8.6 0 11.8z"/></svg>
                 </a>
             </div>
         </div>`;
 }
 
-function getTimelineSection(feature) {
+function getPlotStatus(feature) {
+    const status = feature.properties['Status'] || 'N/A';
+    const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1);
+
+    const iconClass =
+        status === 'available' ? 'fa-check-circle' :
+        status === 'reserved' ? 'fa-hourglass-start' :
+        status === 'occupied' ? 'fa-circle-xmark' :
+        'fa-info-circle';
+
     return `
-        <div class="timeline-grid">
-            <div class="icons">
-                <i class="fas fa-calendar"></i>
-                <span class="timeline-title">Timeline</span>
+        <div class="icons">
+            <div class="plot-status-title">
+                <i class="fas fa-info-circle me-1"></i>
+                <span class="info-label">Plot Status</span>
             </div>
-            <div class="container-map">
-                <div class="date-left">
-                    <span class="info-label">Birth</span> <br>
-                    <span id="birthDate" class="info-value">${feature.properties['Birth'] || 'N/A'}</span>
+            <div class="plot-status-badge ${capitalizedStatus}">
+                <i class="fas ${iconClass}"></i>
+                <span>${capitalizedStatus}</span>
+            </div>
+        </div>
+    `;
+}
+
+function getPlotSpecifications(feature) {
+    const category = feature.properties['category'] || 'N/A';
+    const capitalizedCategory = category.charAt(0).toUpperCase() + category.slice(1);
+    const status = feature.properties['Status'] || 'N/A';
+    const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1);
+    const cssClass = getCategoryClass(feature.properties['category']);
+    return `
+        <div class="plot-dimension">
+            <div class="plot-dimension-header">
+                <span class="info-label"><i class="fa-solid fa-pen-ruler me-2"></i>Dimension</span>
+            </div>
+            <div class="plot-dimension-content">
+                <span class="info-value">2.5m x 1.2m</span>
+                <span>3.0 square meters</span>
+            </div>
+        </div>
+        <div class="plot-dimension">
+            <div class="plot-dimension-header ${category}">
+                <span class="info-label"><i class="fa-solid fa-star me-2"></i>Details</span>
+            </div>
+            <div class="plot-dimension-content">
+                <div class="plot-dimension-badge ${category}">
+                    <i class="fa-solid fa-award"></i>
+                    <span>${capitalizedCategory}</span>
                 </div>
-                <div class="date-right">
-                    <span class="info-label">Death</span> <br>
-                    <span id="deathDate" class="info-value">${feature.properties['Death'] || 'N/A'}</span>
-                </div>
             </div>
-            <div class="seperator"></div>
-            <div class="since">
-                <span class="info-label">Time since Death</span> <br>
-                <span id="timeSinceDeath" class="info-value">${feature.properties['Years Buried'] || 'N/A'}</span>
-            </div>
-        </div>`;
+        </div>
+        `;
 }
 
 function getPhotosSection(feature) {
@@ -469,45 +432,17 @@ function getPhotosSection(feature) {
         <div class="images-container" style="width: 100%;">
             ${feature.properties['PhotoCount'] > 0 
                 ? `<div class="images-grid">${feature.properties['Photos']}</div>`
-                : '<div style="display: flex; justify-content: center;"><br>No photos available</div>'}
+                : '<div style="display: flex; justify-content: center;">No photos available</div>'}
         </div>`;
 }
 
 function pop_category_5(feature, layer) {
-
-    /*
-        Uncomment the following lines if to add 
-        hover to pop-up the dialog.
-    */
-
-    // layer.on({
-    //     mouseout: function(e) {
-    //         if (typeof layer.closePopup == 'function') {
-    //             layer.closePopup();
-    //         } else {
-    //             layer.eachLayer(function(feature) {
-    //                 feature.closePopup()
-    //             });
-    //         }
-    //     },
-    //     mouseover: highlightFeature,
-    // });
-
     const deceasedCount = feature.properties['DeceasedCount'] || 0;
     const graveStatus = feature.properties['Status'];
     const visibility = feature.properties['Visibility'];
 
     const popupContent =
-        //Display empty template if visibility is private
-        (visibility === 'private') ? empty(feature) :
-        //Display reserved template if grave status is 'reserved'
-        (graveStatus === 'reserved') ? getReservedTemplate(feature) :
-        //Display empty template if the deceased count is less than 1 or the grave status is vacant
-        (deceasedCount < 1 || graveStatus === 'vacant') ? empty(feature) :
-        //Display multiple grave template if the deceased count is greater than 1
-        (deceasedCount > 1) ?
-        getMultipleGraveTemplate(feature) :
-        getSingleGraveTemplate(feature);
+        getPopup(feature);
     addNavigationScript();
     addStyles();
 
@@ -516,7 +451,7 @@ function pop_category_5(feature, layer) {
     layer.bindPopup(content, {
         maxHeight: 1000,
         minHeight: 1000,
-        maxWidth: 400
+        maxWidth: 450
     });
 }
 
@@ -908,26 +843,7 @@ function addNavigationScript() {
 
 function addStyles() {
     const style = document.createElement('style');
-    style.textContent = `
-            /* Original direction icon styles */
-            .direction-icon {
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                transition: all 0.3s ease;
-                margin-left: 30px;
-            }
-          
-            .direction-icon svg {
-                width: 20px;
-                height: 20px;
-            }
-        
+    style.textContent = `        
             /* Custom user location marker */
             .custom-user-marker .user-marker {
                 background: #4CAF50;
@@ -1099,7 +1015,7 @@ function addStyles() {
 
 function style_category_5_0(feature) {
     switch (String(feature.properties['Status'])) {
-        case 'occupied1':
+        case 'occupied':
             return {
                 pane: 'pane_category_5',
                     shape: 'circle',
@@ -1116,7 +1032,7 @@ function style_category_5_0(feature) {
                     interactive: true,
             }
             break;
-        case 'vacant':
+        case 'available':
             return {
                 pane: 'pane_category_5',
                     shape: 'circle',
