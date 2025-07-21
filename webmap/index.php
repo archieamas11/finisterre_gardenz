@@ -19,6 +19,8 @@ include_once '../include/database.php';
     <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
+
     <!-- Custom CSS -->
     <link rel="stylesheet" crossorigin href="../assets/compiled/css/app.css">
     <link rel="stylesheet" href="css/map-filter.css">
@@ -108,6 +110,10 @@ include_once '../include/database.php';
     <script src="js/advanced-search.js"></script> -->
     <script src="js/map-filter.js"></script>
     <script src="js/Leaflet.AnimatedSearchBox.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+    lucide.createIcons();
+    </script>
 
     <?php include __DIR__ . '/finisterre_map.php'; ?>
 

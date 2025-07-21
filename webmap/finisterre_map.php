@@ -241,23 +241,6 @@ bounds_group.addLayer(layer_parking_2);
 map.addLayer(layer_parking_2);
 
 function pop_Clusters_3(feature, layer) {
-    /*
-        Uncomment the following lines if to add 
-        hover to pop-up the dialog.
-    */
-
-    // layer.on({
-    //     mouseout: function(e) {
-    //         if (typeof layer.closePopup == 'function') {
-    //             layer.closePopup();
-    //         } else {
-    //             layer.eachLayer(function(feature) {
-    //                 feature.closePopup()
-    //             });
-    //         }
-    //     },
-    //     mouseover: highlightFeature,
-    // });
     var popupContent = '<table>\
                         <tr>\
                             <td colspan="2">' + (feature.properties['Clusters'] !== null ? autolinker.link(String(
@@ -268,9 +251,6 @@ function pop_Clusters_3(feature, layer) {
     var content = removeEmptyRowsFromPopupContent(popupContent, feature);
     layer.on('popupopen', function(e) {
         addClassToPopupIfMedia(content, e.popup);
-    });
-    layer.bindPopup(content, {
-        maxHeight: 400
     });
 }
 

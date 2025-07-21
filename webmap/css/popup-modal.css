@@ -1,3 +1,13 @@
+:root {
+  --bronze: #a0a0a0;
+  --silver: #db0d10;
+  --platinum: #fcc000;
+  --diamond: #bd829e;
+  --vacant: #28a745;
+  --occupied1: #dc3545;
+  --reserved: #ffc107;  
+}
+
 .popup {
   max-width: 420px;
   border-radius: 16px;
@@ -14,7 +24,7 @@
 
 .popup-header.platinum,
 .direction-icon.platinum {
-  background-color: #fcc000;
+  background-color: var(--platinum);
   color: rgb(53, 53, 53);
 }
 
@@ -26,7 +36,7 @@
 
 .popup-header.silver,
 .direction-icon.silver {
-  background-color: #db0d10;
+  background-color: var(--silver);
   color: rgb(228, 228, 228);
 }
 
@@ -38,7 +48,7 @@
 
 .popup-header.bronze,
 .direction-icon.bronze {
-  background-color: #a0a0a0;
+  background-color: var(--bronze);
   color: rgb(22, 22, 22);
 }
 
@@ -50,7 +60,7 @@
 
 .popup-header.diamond,
 .direction-icon.diamond {
-  background-color: #bd829e;
+  background-color: var(--diamond);
   color: rgb(255, 255, 255);
 }
 
@@ -99,11 +109,25 @@
   margin-top: 10px;
 }
 
-.timeline-grid {
+.plot-status {
   border-radius: 10px;
   background-color: hsla(0, 0%, 95%, 0.699);
   padding: 10px 20px;
   margin-top: 10px;
+  text-align: center;
+}
+
+.plot-status.vacant {
+  border: 1px solid var(--vacant);
+  color: #fff;
+}
+.plot-status.occupied1 {
+  border: 1px solid var(--occupied1);
+  color: #fff;
+}
+.plot-status.reserved {
+  border: 1px solid var(--reserved);
+  color: #fff;
 }
 
 .info-grid {
