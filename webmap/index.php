@@ -84,6 +84,11 @@ include_once '../include/database.php';
                         <i class="bi bi-person-arms-up"></i>
                     </button>
                 </div>
+                <div class="button-wrapper">
+                    <a href="../index.html" class="advanced-search-icon">
+                        <i class="bi bi-house-door"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </main>

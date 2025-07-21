@@ -331,7 +331,7 @@ function getHeader(feature) {
         <div class="popup-header ${cssClass}">
             <div class="header-title">
                 <span class="popup-title1">Finisterre</span> <br>
-                <span class="popup-title">Grave Details</span>
+                <span class="popup-title">Plot Information</span>
             </div>
         </div>
   `;
