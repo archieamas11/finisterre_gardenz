@@ -115,7 +115,7 @@
                                     ?>",
                         "public_photos": "<?php
                                     $counter = 0;
-                                    $sql = "SELECT * FROM tbl_images";
+                                    $sql = "SELECT * FROM tbl_files WHERE location_id = 1";
                                     if ($duplicate = mysqli_query($mysqli, $sql)) {
                                         while ($dup = mysqli_fetch_assoc($duplicate)) {
                                             $filename_url = htmlspecialchars($dup['file_name'], ENT_QUOTES);

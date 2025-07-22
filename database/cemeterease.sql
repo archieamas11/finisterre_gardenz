@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jul 18, 2025 at 12:04 AM
+-- Generation Time: Jul 22, 2025 at 06:08 PM
 -- Server version: 8.4.3
 -- PHP Version: 8.3.16
 
@@ -29,8 +29,9 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `grave_points` (
   `grave_id` int NOT NULL,
-  `block` varchar(255) NOT NULL,
-  `status` enum('vacant','reserved','occupied1','occupied2') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'vacant',
+  `block` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `category` enum('bronze','silver','platinum','diamond') NOT NULL,
+  `status` enum('available','reserved','occupied') NOT NULL,
   `label` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `coordinates` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -39,173 +40,17 @@ CREATE TABLE `grave_points` (
 -- Dumping data for table `grave_points`
 --
 
-INSERT INTO `grave_points` (`grave_id`, `block`, `status`, `label`, `coordinates`) VALUES
-(1, 'A', 'occupied1', NULL, '123.79532987333, 10.251576886059'),
-(2, 'A', 'vacant', NULL, '123.79538997542, 10.251603769059'),
-(3, 'A', 'vacant', NULL, '123.79545250587, 10.251632444257'),
-(4, 'A', 'vacant', NULL, '123.79551442923, 10.251659924652'),
-(5, 'A', 'vacant', NULL, '123.79557331713, 10.251686210245'),
-(6, 'A', 'vacant', NULL, '123.79563159794, 10.251712495837'),
-(7, 'A', 'vacant', NULL, '123.79536326338, 10.25151714605'),
-(8, 'A', 'vacant', NULL, '123.79542215128, 10.251548210856'),
-(9, 'A', 'vacant', NULL, '123.79548225337, 10.251582860059'),
-(10, 'A', 'vacant', NULL, '123.79554296254, 10.251612730059'),
-(11, 'A', 'reserved', NULL, '123.79560063626, 10.251640210456'),
-(12, 'A', 'vacant', NULL, '123.79565527452, 10.25166888565'),
-(13, 'A', 'vacant', NULL, '123.79540272434, 10.251452626828'),
-(14, 'A', 'vacant', NULL, '123.79546039806, 10.251487276041'),
-(15, 'A', 'vacant', NULL, '123.79551928596, 10.25151893825'),
-(16, 'A', 'vacant', NULL, '123.79557695968, 10.251551197856'),
-(17, 'A', 'vacant', NULL, '123.79563038376, 10.251582262659'),
-(18, 'A', 'vacant', NULL, '123.79568137946, 10.251613924858'),
-(19, 'A', 'occupied1', NULL, '123.79544036403, 10.251389899794'),
-(20, 'A', 'vacant', NULL, '123.79549560938, 10.251419172411'),
-(21, 'A', 'vacant', NULL, '123.79555631856, 10.251452029428'),
-(22, 'A', 'vacant', NULL, '123.79561399228, 10.251489665642'),
-(23, 'A', 'vacant', NULL, '123.79566984472, 10.25151714605'),
-(24, 'A', 'vacant', NULL, '123.79571719788, 10.251542236855'),
-(25, 'A', 'vacant', NULL, '123.79548043209, 10.251322990944'),
-(26, 'A', 'vacant', NULL, '123.79553324907, 10.251353458368'),
-(27, 'A', 'vacant', NULL, '123.79558970861, 10.251388107593'),
-(28, 'A', 'vacant', NULL, '123.79565163197, 10.251421562013'),
-(29, 'A', 'vacant', NULL, '123.79570687732, 10.25145740603'),
-(30, 'A', 'vacant', NULL, '123.7957524092, 10.251478912438'),
-(31, 'B', 'vacant', NULL, '123.79572994681, 10.251756703417'),
-(32, 'B', 'vacant', NULL, '123.7957821567, 10.251780002004'),
-(33, 'B', 'vacant', NULL, '123.79583800914, 10.25180330059'),
-(34, 'B', 'vacant', NULL, '123.79588961194, 10.251827196573'),
-(35, 'B', 'vacant', NULL, '123.79594728566, 10.251851689954'),
-(36, 'B', 'vacant', NULL, '123.79599646009, 10.251872598936'),
-(37, 'B', 'vacant', NULL, '123.79574998083, 10.251717275035'),
-(38, 'B', 'vacant', NULL, '123.79580219073, 10.251745352823'),
-(39, 'B', 'vacant', NULL, '123.79585622189, 10.25176984621'),
-(40, 'B', 'vacant', NULL, '123.79591025306, 10.251793742196'),
-(41, 'B', 'vacant', NULL, '123.79596671259, 10.251815248581'),
-(42, 'B', 'vacant', NULL, '123.79602135085, 10.251838547164'),
-(43, 'B', 'vacant', NULL, '123.79577608578, 10.251673067449'),
-(44, 'B', 'vacant', NULL, '123.7958264744, 10.251701742641'),
-(45, 'B', 'vacant', NULL, '123.79587929138, 10.25172922303'),
-(46, 'B', 'vacant', NULL, '123.79593210836, 10.251756106017'),
-(47, 'B', 'vacant', NULL, '123.79598431826, 10.251784781201'),
-(48, 'B', 'vacant', NULL, '123.79603834942, 10.251815248581'),
-(49, 'B', 'vacant', NULL, '123.7958112971, 10.251609743059'),
-(50, 'B', 'vacant', NULL, '123.7958628999, 10.251640807856'),
-(51, 'B', 'vacant', NULL, '123.79591389561, 10.25166769085'),
-(52, 'B', 'vacant', NULL, '123.79596307004, 10.251697560842'),
-(53, 'B', 'vacant', NULL, '123.79601527994, 10.251727430831'),
-(54, 'B', 'vacant', NULL, '123.79607598911, 10.251763872213'),
-(55, 'B', 'vacant', NULL, '123.79610452243, 10.251723846432'),
-(56, 'B', 'vacant', NULL, '123.79604138488, 10.251685612846'),
-(57, 'B', 'vacant', NULL, '123.79598917499, 10.251652158454'),
-(58, 'B', 'vacant', NULL, '123.79594060765, 10.251621691058'),
-(59, 'B', 'vacant', NULL, '123.79588900485, 10.251589431459'),
-(60, 'B', 'vacant', NULL, '123.79584165169, 10.251556574457'),
-(61, 'C', 'vacant', NULL, '123.79553021362, 10.251241147063'),
-(62, 'C', 'vacant', NULL, '123.79558242351, 10.251272809297'),
-(63, 'C', 'vacant', NULL, '123.79564252559, 10.251303874127'),
-(64, 'C', 'vacant', NULL, '123.79570262768, 10.251336731155'),
-(65, 'C', 'vacant', NULL, '123.79575787303, 10.251364808977'),
-(66, 'C', 'vacant', NULL, '123.79556724621, 10.251180809591'),
-(67, 'C', 'vacant', NULL, '123.7955976008, 10.251124653912'),
-(68, 'C', 'vacant', NULL, '123.79562916957, 10.251076861838'),
-(69, 'C', 'vacant', NULL, '123.79564981069, 10.251040420377'),
-(70, 'C', 'vacant', NULL, '123.79570384186, 10.251069095625'),
-(71, 'C', 'vacant', NULL, '123.79575848012, 10.25110314748'),
-(72, 'C', 'vacant', NULL, '123.7958191893, 10.251136004529'),
-(73, 'C', 'vacant', NULL, '123.79587322046, 10.251164679769'),
-(74, 'C', 'vacant', NULL, '123.79568077237, 10.251106134485'),
-(75, 'C', 'vacant', NULL, '123.795737839, 10.251138991533'),
-(76, 'C', 'vacant', NULL, '123.79579733399, 10.251170653777'),
-(77, 'C', 'vacant', NULL, '123.79585015098, 10.251201121216'),
-(78, 'C', 'vacant', NULL, '123.79565102488, 10.251153926554'),
-(79, 'C', 'vacant', NULL, '123.79570869859, 10.2511879784'),
-(80, 'C', 'vacant', NULL, '123.79576819359, 10.251221432841'),
-(81, 'C', 'vacant', NULL, '123.79581979639, 10.251251302875'),
-(82, 'C', 'vacant', NULL, '123.79561824192, 10.251211277029'),
-(83, 'C', 'vacant', NULL, '123.7956789511, 10.251242939265'),
-(84, 'C', 'vacant', NULL, '123.79573419645, 10.2512757963'),
-(85, 'C', 'vacant', NULL, '123.79579187017, 10.25130745853'),
-(86, 'D', 'vacant', NULL, '123.79593939346, 10.251409016606'),
-(87, 'D', 'vacant', NULL, '123.79600131682, 10.251447847626'),
-(88, 'D', 'vacant', NULL, '123.79605291963, 10.251480704639'),
-(89, 'D', 'vacant', NULL, '123.79611180753, 10.251519535651'),
-(90, 'D', 'vacant', NULL, '123.79617190961, 10.251554782257'),
-(91, 'D', 'vacant', NULL, '123.7962314046, 10.251598989859'),
-(92, 'D', 'vacant', NULL, '123.79628543577, 10.251628262457'),
-(93, 'D', 'vacant', NULL, '123.79631700454, 10.251644989655'),
-(94, 'D', 'vacant', NULL, '123.7959588204, 10.251348679165'),
-(95, 'D', 'vacant', NULL, '123.79602013667, 10.251385120591'),
-(96, 'D', 'reserved', NULL, '123.79606688274, 10.251415588009'),
-(97, 'D', 'vacant', NULL, '123.79612637773, 10.251450237227'),
-(98, 'D', 'vacant', NULL, '123.79618708691, 10.251488470842'),
-(99, 'D', 'vacant', NULL, '123.79625083154, 10.251527899252'),
-(100, 'D', 'vacant', NULL, '123.79630911235, 10.251562548458'),
-(101, 'D', 'vacant', NULL, '123.7963643577, 10.251599587259'),
-(102, 'D', 'vacant', NULL, '123.79597885443, 10.251291328715'),
-(103, 'D', 'vacant', NULL, '123.79603652815, 10.251324185745'),
-(104, 'D', 'vacant', NULL, '123.79609420187, 10.251358237572'),
-(105, 'D', 'vacant', NULL, '123.79615491104, 10.251394678997'),
-(106, 'D', 'vacant', NULL, '123.79620287129, 10.251424549014'),
-(107, 'D', 'vacant', NULL, '123.79626904429, 10.251464574833'),
-(108, 'D', 'vacant', NULL, '123.79632975347, 10.251501613646'),
-(109, 'D', 'vacant', NULL, '123.79641231795, 10.251550003056'),
-(110, 'D', 'vacant', NULL, '123.79599828137, 10.251233978255'),
-(111, 'D', 'vacant', NULL, '123.79605291963, 10.251263848288'),
-(112, 'D', 'vacant', NULL, '123.79611302171, 10.251298497522'),
-(113, 'D', 'vacant', NULL, '123.79617555216, 10.25133015975'),
-(114, 'D', 'vacant', NULL, '123.79622047695, 10.251352263567'),
-(115, 'D', 'vacant', NULL, '123.79628907832, 10.251392289395'),
-(116, 'D', 'vacant', NULL, '123.79635403714, 10.251428133416'),
-(117, 'D', 'vacant', NULL, '123.79646817039, 10.251486081241'),
-(118, 'D', 'vacant', NULL, '123.7960256005, 10.25116527717'),
-(119, 'D', 'vacant', NULL, '123.79607173947, 10.251194549808'),
-(120, 'D', 'vacant', NULL, '123.79613669829, 10.251230991252'),
-(121, 'D', 'vacant', NULL, '123.79619862165, 10.251263848288'),
-(122, 'D', 'vacant', NULL, '123.79623686843, 10.251287744312'),
-(123, 'D', 'vacant', NULL, '123.79630729107, 10.251326575347'),
-(124, 'D', 'vacant', NULL, '123.79637285699, 10.251366601178'),
-(125, 'C', 'vacant', NULL, '123.79577729996, 10.251070290427'),
-(126, 'C', 'vacant', NULL, '123.79584590133, 10.251090004659'),
-(127, 'C', 'vacant', NULL, '123.79590782469, 10.251113303295');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `grave_points_backup`
---
-
-CREATE TABLE `grave_points_backup` (
-  `grave_id` int NOT NULL,
-  `block` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `status` enum('vacant','occupied1','occupied2','reserved') COLLATE utf8mb4_general_ci NOT NULL,
-  `label` varchar(10) COLLATE utf8mb4_general_ci NOT NULL,
-  `coordinates` varchar(255) COLLATE utf8mb4_general_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `grave_points_backup`
---
-
-INSERT INTO `grave_points_backup` (`grave_id`, `block`, `status`, `label`, `coordinates`) VALUES
-(1, 'A', 'occupied1', '', '123.795299160422203, 10.25162079742365'),
-(2, 'A', 'vacant', '', '123.795334064117114, 10.251637793619759'),
-(3, 'A', 'vacant', '', '123.79536608915673, 10.251651603028426'),
-(4, 'A', 'vacant', '', '123.795404951002567, 10.251669661485005'),
-(5, 'A', 'vacant', '', '123.795436256378409, 10.251682762717563'),
-(6, 'A', 'vacant', '', '123.795468641249954, 10.251698696648321'),
-(7, 'A', 'vacant', '', '123.795500306457669, 10.251711089705028'),
-(8, 'A', 'vacant', '', '123.795534130656833, 10.25172666954705'),
-(9, 'A', 'vacant', '', '123.79556363687314, 10.251740124864549'),
-(10, 'A', 'vacant', '', '123.795596021744686, 10.251754642443311'),
-(11, 'A', 'reserved', '', '123.795321470000388, 10.251576890579488'),
-(12, 'B', 'vacant', '', '123.795357453191002, 10.251592470428115'),
-(13, 'A', 'vacant', '', '123.795390557726336, 10.251607696188531'),
-(14, 'A', 'vacant', '', '123.795425821253147, 10.251625046472764'),
-(15, 'A', 'vacant', '', '123.795456766797059, 10.251638501794577'),
-(16, 'A', 'vacant', '', '123.795488432004774, 10.251653373465389'),
-(17, 'A', 'vacant', '', '123.795519377548686, 10.251667536960753'),
-(18, 'A', 'vacant', '', '123.795552841915949, 10.251682408630202'),
-(19, 'A', 'occupied1', '', '123.795583067796059, 10.251696572124267');
+INSERT INTO `grave_points` (`grave_id`, `block`, `category`, `status`, `label`, `coordinates`) VALUES
+(1, 'A', 'diamond', 'occupied', NULL, '123.79769285129, 10.249193799482'),
+(2, 'A', 'diamond', 'available', NULL, '123.79772218795, 10.249206732589'),
+(3, 'A', 'silver', 'available', NULL, '123.79775692256, 10.249221975178'),
+(4, 'A', 'silver', 'available', NULL, '123.7977887235, 10.249236063025'),
+(5, 'A', 'diamond', 'available', NULL, '123.79773427465, 10.24917878784'),
+(6, 'A', 'diamond', 'available', NULL, '123.79770376452, 10.249166316629'),
+(7, 'A', 'bronze', 'available', NULL, '123.79782322341, 10.249251074665'),
+(8, 'A', 'platinum', 'available', NULL, '123.79776900926, 10.249193799482'),
+(9, 'A', 'platinum', 'available', NULL, '123.79780116224, 10.249206963537'),
+(10, 'A', 'bronze', 'reserved', NULL, '123.79783613154, 10.249222206126');
 
 -- --------------------------------------------------------
 
@@ -331,7 +176,8 @@ INSERT INTO `tbl_deceased` (`record_id`, `grave_id`, `lot_id`, `customer_id`, `d
 CREATE TABLE `tbl_files` (
   `id` int NOT NULL,
   `grave_filename` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `record_id` int NOT NULL,
+  `record_id` int DEFAULT NULL,
+  `location_id` int DEFAULT NULL,
   `date_uploaded` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -339,9 +185,30 @@ CREATE TABLE `tbl_files` (
 -- Dumping data for table `tbl_files`
 --
 
-INSERT INTO `tbl_files` (`id`, `grave_filename`, `record_id`, `date_uploaded`) VALUES
-(48, 'https://res.cloudinary.com/djrkvgfvo/image/upload/v1752756875/Grave_Maintenance_-_Standard_copy_mzxqpt.jpg', 19, '2024-12-10'),
-(49, 'https://res.cloudinary.com/djrkvgfvo/image/upload/v1752756582/9457a7ca-fa2f-4331-b32e-d0223db1fd8a_-_Edited_xkre2p.png', 19, '2024-12-10');
+INSERT INTO `tbl_files` (`id`, `grave_filename`, `record_id`, `location_id`, `date_uploaded`) VALUES
+(48, 'https://res.cloudinary.com/djrkvgfvo/image/upload/v1752756875/Grave_Maintenance_-_Standard_copy_mzxqpt.jpg', 19, NULL, '2024-12-10'),
+(49, 'https://res.cloudinary.com/djrkvgfvo/image/upload/v1752756582/9457a7ca-fa2f-4331-b32e-d0223db1fd8a_-_Edited_xkre2p.png', 19, NULL, '2024-12-10');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tbl_locations`
+--
+
+CREATE TABLE `tbl_locations` (
+  `location_id` int NOT NULL,
+  `location_title` varchar(255) NOT NULL,
+  `location_description` varchar(255) NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `tbl_locations`
+--
+
+INSERT INTO `tbl_locations` (`location_id`, `location_title`, `location_description`, `created_at`, `updated_at`) VALUES
+(1, 'playground', 'this is the 1st playground', '2025-07-22 18:02:04', '2025-07-22 18:02:04');
 
 -- --------------------------------------------------------
 
@@ -443,27 +310,6 @@ INSERT INTO `tbl_orders` (`order_id`, `customer_id`, `service_id`, `grave_id`, `
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_plot_files`
---
-
-CREATE TABLE `tbl_plot_files` (
-  `plot_files_id` int NOT NULL,
-  `grave_id` int NOT NULL,
-  `file_name` varchar(255) NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Dumping data for table `tbl_plot_files`
---
-
-INSERT INTO `tbl_plot_files` (`plot_files_id`, `grave_id`, `file_name`, `created_at`, `updated_at`) VALUES
-(2, 60, 'https://res.cloudinary.com/djrkvgfvo/image/upload/v1733845017/grave_images/grave_67585fea385ed.jpg', '2025-07-17 19:30:39', '2025-07-17 19:30:39');
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `tbl_services`
 --
 
@@ -515,7 +361,7 @@ CREATE TABLE `tbl_users` (
 INSERT INTO `tbl_users` (`user_id`, `user_type`, `username`, `password`, `remember_token`, `reset_token`, `reset_token_expires`, `verification_token`, `verification_token_expires`, `google_id`, `auth_provider`, `is_verified`, `user_status`, `last_login`, `created_at`, `updated_at`) VALUES
 (1, 'admin', 'admin', '$2y$10$lhap42nMrL87xdMPjom9E.ibylrODmbePjqv5gmzUbfjcUFlsA4Fm', NULL, 'ab970e7023b80876f2180215611f0e6a4eba1b36f540fcd7eae5d30ab184bb5e', '2025-06-10 16:56:08', NULL, NULL, NULL, 'manual', 1, 'active', '2025-07-18 07:42:20', '2025-06-07 23:30:41', '2025-07-18 07:42:20'),
 (14, 'user', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '110789000195227629652', 'google', 1, 'active', NULL, '2025-06-08 03:04:46', '2025-06-08 20:02:22'),
-(15, 'user', 'user', '$2y$10$20mKrz6yQiNOgD4Odv3SQ.t9.CyLkzutyHbJfjrl2WSMUXqQ0mcvC', NULL, NULL, NULL, NULL, NULL, NULL, 'manual', 1, 'active', '2025-07-18 02:26:17', '2025-06-08 19:12:28', '2025-07-18 02:26:17'),
+(15, 'user', 'user', '$2y$10$20mKrz6yQiNOgD4Odv3SQ.t9.CyLkzutyHbJfjrl2WSMUXqQ0mcvC', NULL, NULL, NULL, NULL, NULL, NULL, 'manual', 1, 'active', '2025-07-21 14:32:07', '2025-06-08 19:12:28', '2025-07-21 14:32:07'),
 (16, 'staff', 'staff', '$2y$10$xIeTHXr3M0WnPY6jRtov7OKZt8tIVS2E..0tssWErx3w4hL6DZfMG', NULL, NULL, NULL, NULL, NULL, NULL, 'manual', 1, 'active', '2025-07-15 23:53:03', '2025-06-08 19:12:47', '2025-07-15 23:53:03'),
 (17, 'user', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '114207335796793648840', 'google', 1, 'active', NULL, '2025-06-08 21:34:42', '2025-06-08 21:34:42'),
 (23, 'user', 'xoppal', '$2y$10$.lZoKQb2P.hIGai6Vnr4ye9v0Xr0PvXhEfTrCo0zDy9xuaBtox9wG', NULL, NULL, NULL, 'e8dd70ad45a532cfaad78932f767c614cb438f8247c675b12feadf0f36d06878', '2025-06-25 01:16:44', NULL, 'manual', 0, 'active', NULL, '2025-06-24 01:16:44', '2025-06-24 01:16:44');
@@ -528,12 +374,6 @@ INSERT INTO `tbl_users` (`user_id`, `user_type`, `username`, `password`, `rememb
 -- Indexes for table `grave_points`
 --
 ALTER TABLE `grave_points`
-  ADD PRIMARY KEY (`grave_id`);
-
---
--- Indexes for table `grave_points_backup`
---
-ALTER TABLE `grave_points_backup`
   ADD PRIMARY KEY (`grave_id`);
 
 --
@@ -564,7 +404,14 @@ ALTER TABLE `tbl_deceased`
 --
 ALTER TABLE `tbl_files`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `record_id` (`record_id`);
+  ADD KEY `record_id` (`record_id`),
+  ADD KEY `location_id` (`location_id`);
+
+--
+-- Indexes for table `tbl_locations`
+--
+ALTER TABLE `tbl_locations`
+  ADD PRIMARY KEY (`location_id`);
 
 --
 -- Indexes for table `tbl_lot`
@@ -591,13 +438,6 @@ ALTER TABLE `tbl_orders`
   ADD KEY `grave_id` (`grave_id`);
 
 --
--- Indexes for table `tbl_plot_files`
---
-ALTER TABLE `tbl_plot_files`
-  ADD PRIMARY KEY (`plot_files_id`),
-  ADD KEY `grave_id` (`grave_id`);
-
---
 -- Indexes for table `tbl_services`
 --
 ALTER TABLE `tbl_services`
@@ -617,13 +457,7 @@ ALTER TABLE `tbl_users`
 -- AUTO_INCREMENT for table `grave_points`
 --
 ALTER TABLE `grave_points`
-  MODIFY `grave_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
-
---
--- AUTO_INCREMENT for table `grave_points_backup`
---
-ALTER TABLE `grave_points_backup`
-  MODIFY `grave_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `grave_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `tbl_activity`
@@ -650,6 +484,12 @@ ALTER TABLE `tbl_files`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
+-- AUTO_INCREMENT for table `tbl_locations`
+--
+ALTER TABLE `tbl_locations`
+  MODIFY `location_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `tbl_lot`
 --
 ALTER TABLE `tbl_lot`
@@ -666,12 +506,6 @@ ALTER TABLE `tbl_notifications`
 --
 ALTER TABLE `tbl_orders`
   MODIFY `order_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=124;
-
---
--- AUTO_INCREMENT for table `tbl_plot_files`
---
-ALTER TABLE `tbl_plot_files`
-  MODIFY `plot_files_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `tbl_services`
@@ -713,7 +547,8 @@ ALTER TABLE `tbl_deceased`
 -- Constraints for table `tbl_files`
 --
 ALTER TABLE `tbl_files`
-  ADD CONSTRAINT `tbl_files_ibfk_1` FOREIGN KEY (`record_id`) REFERENCES `grave_points` (`grave_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `tbl_files_ibfk_1` FOREIGN KEY (`record_id`) REFERENCES `grave_points` (`grave_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `tbl_files_ibfk_2` FOREIGN KEY (`location_id`) REFERENCES `tbl_locations` (`location_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
 -- Constraints for table `tbl_lot`
@@ -730,12 +565,6 @@ ALTER TABLE `tbl_orders`
   ADD CONSTRAINT `tbl_orders_ibfk_3` FOREIGN KEY (`deceased_id`) REFERENCES `tbl_deceased` (`record_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `tbl_orders_ibfk_4` FOREIGN KEY (`grave_id`) REFERENCES `grave_points` (`grave_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `tbl_orders_ibfk_5` FOREIGN KEY (`customer_id`) REFERENCES `tbl_customers` (`customer_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Constraints for table `tbl_plot_files`
---
-ALTER TABLE `tbl_plot_files`
-  ADD CONSTRAINT `tbl_plot_files_ibfk_1` FOREIGN KEY (`grave_id`) REFERENCES `grave_points` (`grave_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
