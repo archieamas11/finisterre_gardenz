@@ -118,6 +118,7 @@ include_once '../include/database.php';
     <script src="js/advanced-search.js"></script> -->
     <script src="js/map-filter.js"></script>
     <script src="js/Leaflet.AnimatedSearchBox.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script>
     lucide.createIcons();
     </script>
