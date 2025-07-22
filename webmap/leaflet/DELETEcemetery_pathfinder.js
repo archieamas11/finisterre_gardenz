@@ -432,7 +432,6 @@ var CemeteryPathfinder = {
     }
 };
 
-
 // Initialize the cemetery pathfinder when the map is ready
 map.whenReady(function () {
     // Wait for json_path_1 and json_boundary_0 to be loaded

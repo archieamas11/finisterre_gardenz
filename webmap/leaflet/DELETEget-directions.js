@@ -183,7 +183,8 @@ function addNavigationScript() {
                     }]
                 },
                 router: L.Routing.osrmv1({
-                    serviceUrl: 'https://router.project-osrm.org/route/v1'
+                    // serviceUrl: 'https://router.project-osrm.org/route/v1'
+                    serviceUrl: 'http://localhost:5000/route/v1'
                 }),
                 fitSelectedRoutes: true,
                 show: false,

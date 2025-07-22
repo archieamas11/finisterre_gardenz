@@ -338,9 +338,6 @@ function pop_category_5(feature, layer) {
 
     const popupContent =
         getPopup(feature);
-    addNavigationScript();
-    addStyles();
-
     const content = removeEmptyRowsFromPopupContent(popupContent, feature);
     layer.on('popupopen', (e) => addClassToPopupIfMedia(content, e.popup));
     layer.bindPopup(content, {
@@ -552,13 +549,11 @@ displayLayersScript.src = './leaflet/display-layers.js';
 displayLayersScript.type = 'text/javascript';
 document.head.appendChild(displayLayersScript);
 
-// Include the cemetery pathfinder functionality
-// This script will handle the pathfinding logic for navigating through the cemetery
-// And also for the getting the directions to a specific grave refer to get-directions.js
-const pathfinderScript = document.createElement('script');
-pathfinderScript.src = './leaflet/cemetery_pathfinder.js';
-pathfinderScript.type = 'text/javascript';
-document.head.appendChild(pathfinderScript);
+// Include the clean navigation system (two-step routing: city→gate→grave)
+const navigationScript = document.createElement('script');
+navigationScript.src = './leaflet/get-route.js';
+navigationScript.type = 'text/javascript';
+document.head.appendChild(navigationScript);
 
 // Include the search box functionality
 const searchboxScript = document.createElement('script');
