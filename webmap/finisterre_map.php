@@ -543,6 +543,13 @@ var layer_exit_7 = new L.geoJson(json_exit_7, {
         return L.marker(latlng, style_exit_7_0(feature));
     },
 });
+
+// Display all point images in the bounds group
+const displayImages = document.createElement('script');
+displayImages.src = './leaflet/popup-images.js';
+displayImages.type = 'text/javascript';
+document.head.appendChild(displayImages);
+
 // Display all layers in the bounds group
 const displayLayersScript = document.createElement('script');
 displayLayersScript.src = './leaflet/display-layers.js';

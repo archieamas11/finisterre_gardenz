@@ -319,8 +319,7 @@ include_once '../include/database.php';
     <script src="data/category_5.js"></script>
     <script src="data/entrance_6.js"></script>
     <script src="data/exit_7.js"></script>
-    <script src="data/path_1.js"></script>
-    <script src="data/boundary_0.js"></script>
+    <script src="data/playground_1.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
     <!-- Leaflet Map -->

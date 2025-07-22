@@ -113,6 +113,15 @@
                                         }
                                     }
                                     ?>",
+                        "public_photos": "<?php
+                                    $counter = 0;
+                                    $sql = "SELECT * FROM tbl_images";
+                                    if ($duplicate = mysqli_query($mysqli, $sql)) {
+                                        while ($dup = mysqli_fetch_assoc($duplicate)) {
+                                            $filename_url = htmlspecialchars($dup['file_name'], ENT_QUOTES);
+                                        }
+                                    }
+                                    ?>",
                         "PhotoCount": "<?php echo $counter; ?>",
                         "auxiliary_storage_labeling_offsetquad": "<?php echo $row['label']; ?>"
                     },
