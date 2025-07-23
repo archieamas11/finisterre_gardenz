@@ -15,8 +15,6 @@ var navigationState = {
 };
 
 function navigateToGrave(graveLat, graveLng) {
-    console.log('🚀 Starting two-step navigation to grave:', [graveLat, graveLng]);
-
     if (!navigator.geolocation) {
         alert('GPS not supported by your browser');
         return;
@@ -28,8 +26,6 @@ function navigateToGrave(graveLat, graveLng) {
         function (position) {
             var userLat = position.coords.latitude;
             var userLng = position.coords.longitude;
-
-            console.log('📍 User location:', [userLat, userLng]);
 
             // Set destination and initial start point
             navigationState.destination = L.latLng(graveLat, graveLng);
@@ -58,15 +54,11 @@ function createTwoStepRoute(userLat, userLng, graveLat, graveLng) {
         'https://router.project-osrm.org/route/v1/driving',
         '#FF6B6B',
         function (step1Route) {
-            console.log('✅ Step 1 (City→Gate) route found');
-
             getRoute(
                 gateLat, gateLng, graveLat, graveLng,
                 'https://finisterreosm-production.up.railway.app/route/v1/foot',
                 '#4ECDC4',
                 function (step2Route) {
-                    console.log('✅ Step 2 (Gate→Grave) route found');
-
                     var finalRoute = extendRouteToGrave(step2Route, graveLat, graveLng);
                     displayRoutes([step1Route, finalRoute], userLat, userLng, graveLat, graveLng);
                     startLiveTracking();
@@ -220,11 +212,8 @@ function startLiveTracking() {
     if (!navigator.geolocation) return;
 
     if (navigationState.watchId) {
-        console.log('Live tracking already active');
         return;
     }
-
-    console.log('🔄 Starting live GPS tracking (every 3 seconds)');
 
     navigationState.watchId = navigator.geolocation.watchPosition(
         function (position) {
@@ -234,8 +223,6 @@ function startLiveTracking() {
 
                 // Update user marker position
                 navigationState.userMarker.setLatLng([newLat, newLng]);
-
-                console.log('📡 Updated user position:', [newLat, newLng]);
 
                 // Check distance from previous start point and recalculate if needed
                 if (navigationState.previousStartPoint && navigationState.destination) {
@@ -353,8 +340,6 @@ function stopNavigation() {
     navigationState.destination = null;
     navigationState.previousStartPoint = null;
     navigationState.isRecalculating = false;
-
-    console.log('✅ Navigation stopped and cleaned up');
 }
 
 window.navigateToGrave = navigateToGrave;
