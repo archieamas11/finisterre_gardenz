@@ -9,9 +9,9 @@ var navigationState = {
     userMarker: null,
     routeLines: [],
     destinationMarker: null,
-    destination: null,          // Added to store grave coordinates
-    previousStartPoint: null,  // Added to track last route start
-    isRecalculating: false     // Added to prevent overlapping recalculations
+    destination: null,
+    previousStartPoint: null,
+    isRecalculating: false
 };
 
 function navigateToGrave(graveLat, graveLng) {
@@ -62,7 +62,7 @@ function createTwoStepRoute(userLat, userLng, graveLat, graveLng) {
                     var finalRoute = extendRouteToGrave(step2Route, graveLat, graveLng);
                     displayRoutes([step1Route, finalRoute], userLat, userLng, graveLat, graveLng);
                     startLiveTracking();
-                    // Start route simulation if available
+                    // Start route simulation for testing purposes
                     if (typeof startRouteSimulation === 'function') {
                         setTimeout(function () {
                             console.log('🎬 Starting route simulation...');
@@ -266,35 +266,29 @@ function showNavigationPanel(totalDistance, totalDuration) {
 
     var panel = document.createElement('div');
     panel.id = 'nav-panel';
-    panel.style.cssText = `
-        position: fixed; bottom: 20px; left: 20px; background: white;
-        padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 1000; font-family: Arial, sans-serif; min-width: 280px;
-        border: 1px solid #e0e0e0;
-    `;
-
+    panel.className = 'cemetery-nav-panel';
     panel.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <div style="display: flex; align-items: center;">
-                <i class="fas fa-route" style="color: #007AFF; margin-right: 8px; font-size: 16px;"></i>
-                <strong style="color: #333;">Navigation Active</strong>
+        <div class="cemetery-nav-header">
+            <div class="cemetery-nav-title">
+                <i class="fas fa-route"></i>
+                <strong>Navigation Active</strong>
             </div>
-            <button onclick="stopNavigation()" style="background: #FF3B30; color: white; border: none; border-radius: 50%; padding: 8px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-times" style="font-size: 12px;"></i>
+            <button onclick="stopNavigation()" class="cemetery-nav-close">
+                <i class="fas fa-times"></i>
             </button>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <div style="display: flex; align-items: center;">
-                <i class="fas fa-road" style="color: #666; margin-right: 6px; font-size: 14px;"></i>
-                <span style="font-size: 14px; color: #666;">${distanceKm} km</span>
+        <div class="cemetery-nav-stats">
+            <div class="cemetery-nav-distance">
+                <i class="fas fa-road"></i>
+                <span>${distanceKm} km</span>
             </div>
-            <div style="display: flex; align-items: center;">
-                <i class="fas fa-clock" style="color: #666; margin-right: 6px; font-size: 14px;"></i>
-                <span style="font-size: 14px; color: #666;">${durationMin} min</span>
+            <div class="cemetery-nav-duration">
+                <i class="fas fa-clock"></i>
+                <span>${durationMin} min</span>
             </div>
         </div>
-        <div style="display: flex; align-items: center; font-size: 12px; color: #999;">
-            <i class="fas fa-location-dot" style="margin-right: 6px; color: #4CAF50;"></i>
+        <div class="cemetery-nav-status">
+            <i class="fas fa-location-dot"></i>
             <span>Live tracking enabled</span>
         </div>
     `;
@@ -345,32 +339,3 @@ function stopNavigation() {
 window.navigateToGrave = navigateToGrave;
 window.stopNavigation = stopNavigation;
 
-(function addMarkerStyles() {
-    var style = document.createElement('style');
-    style.textContent = `
-        .custom-user-marker .user-marker {
-            background: #4CAF50; border: 3px solid #fff; border-radius: 50%;
-            width: 30px; height: 30px; display: flex; align-items: center;
-            justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            animation: pulse 2s infinite;
-        }
-        .custom-user-marker .user-marker i {
-            color: white; font-size: 14px;
-        }
-        .custom-destination-marker .destination-marker {
-            background: #f44336; border: 2px solid #fff; border-radius: 50% 50% 50% 0;
-            width: 30px; height: 30px; display: flex; align-items: center;
-            justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transform: rotate(-45deg);
-        }
-        .custom-destination-marker .destination-marker i {
-            color: white; font-size: 16px; transform: rotate(45deg);
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
-        }
-    `;
-    document.head.appendChild(style);
-})();

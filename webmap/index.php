@@ -38,10 +38,9 @@ include_once '../include/database.php';
     <link rel="stylesheet" href="css/fontawesome-all.min.css">
     <link rel="stylesheet" href="css/leaflet.photon.css">
     <link rel="stylesheet" href="css/leaflet-measure.css">
+    <link rel="stylesheet" href="css/cemetery-navigation-panel.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-
     <title>Finisterre - Map</title>
-
     <script async data-id="five-server" src="http://localhost:5500/fiveserver.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://kit.fontawesome.com/665d03e83d.js" crossorigin="anonymous"></script>
@@ -298,6 +297,32 @@ include_once '../include/database.php';
                 </div>
             </div>
         </div>
+
+        <div id="nav-panel" class="cemetery-nav-panel" style="display:none">
+            <div class="cemetery-nav-header">
+                <div class="cemetery-nav-title">
+                    <i class="fas fa-route"></i>
+                    <strong>Navigation Active</strong>
+                </div>
+                <button onclick="stopNavigation()" class="cemetery-nav-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="cemetery-nav-stats">
+                <div class="cemetery-nav-distance">
+                    <i class="fas fa-road"></i>
+                    <span id="cemetery-nav-distance-value">0.0 km</span>
+                </div>
+                <div class="cemetery-nav-duration">
+                    <i class="fas fa-clock"></i>
+                    <span id="cemetery-nav-duration-value">0 min</span>
+                </div>
+            </div>
+            <div class="cemetery-nav-status">
+                <i class="fas fa-location-dot"></i>
+                <span>Live tracking enabled</span>
+            </div>
+        </div>
     </main>
     <script src="js/qgis2web_expressions.js"></script>
     <script src="js/leaflet.js"></script>
@@ -334,7 +359,9 @@ include_once '../include/database.php';
     <script src="js/Leaflet.AnimatedSearchBox.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
-    <script> lucide.createIcons(); </script>
+    <script>
+    lucide.createIcons();
+    </script>
 
     <?php include __DIR__ . '/finisterre_map.php'; ?>
 
