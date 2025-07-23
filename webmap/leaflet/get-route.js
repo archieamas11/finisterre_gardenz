@@ -14,7 +14,22 @@ var navigationState = {
     currentRoute: null,
     userMarker: null,
     routeLines: [],
-    destinationMarker: null
+    destinationMarker: null,
+    // Dynamic routing properties
+    destination: null, // Store final destination
+    lastUserPosition: null,
+    routeDeviation: false,
+    rerouteThreshold: 50, // meters - distance before considering reroute
+    progressCheckInterval: null,
+    currentRouteProgress: 0,
+    totalRouteCoordinates: [],
+    lastRouteUpdate: null, // Timestamp of last route update to prevent excessive updates
+    // Simulation properties
+    isSimulating: false,
+    simulationInterval: null,
+    simulationIndex: 0,
+    simulationCoordinates: [],
+    simulationSpeed: 1000 // milliseconds between moves (2 seconds)
 };
 
 /**
@@ -38,6 +53,10 @@ function navigateToGrave(graveLat, graveLng) {
             var userLng = position.coords.longitude;
             
             console.log('📍 User location:', [userLat, userLng]);
+            
+            // Store destination for dynamic routing
+            navigationState.destination = { lat: graveLat, lng: graveLng };
+            navigationState.lastUserPosition = { lat: userLat, lng: userLng };
             
             // Start two-step routing
             createTwoStepRoute(userLat, userLng, graveLat, graveLng);
@@ -67,7 +86,7 @@ function createTwoStepRoute(userLat, userLng, graveLat, graveLng) {
     getRoute(
         userLat, userLng, gateLat, gateLng,
         'https://router.project-osrm.org/route/v1/driving', // Public OSRM for city travel
-        '#FF6B6B', // Red color for city route - change color here
+        '#FF6B6B', // Red color for city route
         function(step1Route) {
             console.log('✅ Step 1 (City→Gate) route found');
             
@@ -84,6 +103,10 @@ function createTwoStepRoute(userLat, userLng, graveLat, graveLng) {
                     
                     // Display both routes and start tracking
                     displayRoutes([step1Route, finalRoute], userLat, userLng, graveLat, graveLng);
+                    
+                    // Store total route coordinates for progress tracking
+                    storeRouteForProgress([step1Route, finalRoute]);
+                    
                     startLiveTracking();
                 }
             );
@@ -171,6 +194,357 @@ function calculateDistanceBetweenPoints(lat1, lng1, lat2, lng2) {
 }
 
 /**
+ * Store route coordinates for progress tracking
+ */
+function storeRouteForProgress(routes) {
+    navigationState.totalRouteCoordinates = [];
+    routes.forEach(function(route) {
+        navigationState.totalRouteCoordinates = navigationState.totalRouteCoordinates.concat(route.coordinates);
+    });
+    navigationState.currentRouteProgress = 0;
+    console.log('📊 Stored', navigationState.totalRouteCoordinates.length, 'route points for progress tracking');
+}
+
+/**
+ * Check if user has deviated from route and needs rerouting with smart threshold
+ */
+function checkForReroute(userLat, userLng) {
+    if (!navigationState.destination || navigationState.totalRouteCoordinates.length === 0) {
+        return false;
+    }
+    
+    // Find closest point on current route and update progress
+    var closestDistance = Infinity;
+    var closestIndex = 0;
+    
+    for (var i = Math.max(0, navigationState.currentRouteProgress - 5); i < navigationState.totalRouteCoordinates.length; i++) {
+        var routePoint = navigationState.totalRouteCoordinates[i];
+        var distance = calculateDistanceBetweenPoints(userLat, userLng, routePoint[0], routePoint[1]);
+        
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = i;
+        }
+    }
+    
+    // Update progress (only move forward)
+    if (closestIndex > navigationState.currentRouteProgress) {
+        navigationState.currentRouteProgress = closestIndex;
+        console.log('📈 Route progress updated:', Math.round((closestIndex / navigationState.totalRouteCoordinates.length) * 100) + '%');
+    }
+    
+    // Dynamic reroute threshold based on context
+    var dynamicThreshold = navigationState.rerouteThreshold;
+    
+    // Be more tolerant near the destination
+    var progress = navigationState.currentRouteProgress / navigationState.totalRouteCoordinates.length;
+    if (progress > 0.9) {
+        dynamicThreshold = 20; // 20m near destination
+    } else if (progress > 0.7) {
+        dynamicThreshold = 30; // 30m in cemetery
+    }
+    
+    // Check if user is too far from route
+    if (closestDistance > dynamicThreshold) {
+        console.log('🔄 User is', Math.round(closestDistance), 'm from route (threshold:', dynamicThreshold + 'm) - triggering reroute');
+        
+        // Show reroute notification
+        showRerouteNotification();
+        
+        return true;
+    }
+    
+    return false;
+}
+
+/**
+ * Show a brief notification when rerouting
+ */
+function showRerouteNotification() {
+    var notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #FF6B6B;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(255,107,107,0.3);
+        animation: slideInOut 3s ease-in-out;
+    `;
+    notification.innerHTML = '<i class="fas fa-route" style="margin-right: 8px;"></i>Recalculating route...';
+    
+    // Add animation keyframes
+    if (!document.getElementById('reroute-animation')) {
+        var style = document.createElement('style');
+        style.id = 'reroute-animation';
+        style.textContent = `
+            @keyframes slideInOut {
+                0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                20%, 80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+                100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            }
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translateY(-10px); }
+                20%, 80% { opacity: 1; transform: translateY(0); }
+                100% { opacity: 0; transform: translateY(-10px); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(function() {
+        document.body.removeChild(notification);
+    }, 3000);
+}
+
+/**
+ * Trigger rerouting from current position to destination with improved logic
+ */
+function triggerReroute(userLat, userLng) {
+    if (!navigationState.destination || navigationState.routeDeviation) {
+        return; // Already rerouting or no destination
+    }
+    
+    console.log('🔄 Rerouting from current position to destination...');
+    navigationState.routeDeviation = true;
+    
+    // Temporarily update user marker to show rerouting state
+    if (navigationState.userMarker) {
+        var originalIcon = navigationState.userMarker.getIcon();
+        var rerouteIcon = L.divIcon({
+            html: '<div class="user-marker rerouting"><i class="fas fa-sync-alt fa-spin"></i></div>',
+            className: 'custom-user-marker',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+        navigationState.userMarker.setIcon(rerouteIcon);
+        
+        // Restore original icon after rerouting
+        setTimeout(function() {
+            if (navigationState.userMarker) {
+                navigationState.userMarker.setIcon(originalIcon);
+            }
+        }, 2000);
+    }
+    
+    // Use dynamic route update instead of full recreation
+    updateRouteFromCurrentPosition(userLat, userLng);
+    
+    // Reset deviation flag after a delay
+    setTimeout(function() {
+        navigationState.routeDeviation = false;
+    }, 3000);
+}
+
+/**
+ * Calculate bearing between two points
+ */
+function calculateBearing(lat1, lng1, lat2, lng2) {
+    var dLng = (lng2 - lng1) * Math.PI / 180;
+    var lat1Rad = lat1 * Math.PI / 180;
+    var lat2Rad = lat2 * Math.PI / 180;
+    
+    var y = Math.sin(dLng) * Math.cos(lat2Rad);
+    var x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLng);
+    
+    var bearing = Math.atan2(y, x) * 180 / Math.PI;
+    return (bearing + 360) % 360;
+}
+
+/**
+ * Get turn direction based on bearing change
+ */
+function getTurnDirection(currentBearing, nextBearing) {
+    var diff = (nextBearing - currentBearing + 360) % 360;
+    
+    if (diff >= 315 || diff <= 45) {
+        return { direction: 'straight', icon: 'fas fa-arrow-up' };
+    } else if (diff > 45 && diff <= 135) {
+        return { direction: 'right', icon: 'fas fa-arrow-right' };
+    } else if (diff > 135 && diff <= 225) {
+        return { direction: 'u-turn', icon: 'fas fa-undo' };
+    } else {
+        return { direction: 'left', icon: 'fas fa-arrow-left' };
+    }
+}
+
+/**
+ * Get current direction based on user progress along route with turn-by-turn navigation
+ */
+function getCurrentDirectionFromProgress() {
+    if (!navigationState.isActive || navigationState.totalRouteCoordinates.length === 0) {
+        return {
+            icon: 'fas fa-map-marker-alt',
+            instruction: 'Start navigation',
+            distance: '',
+            progress: 0
+        };
+    }
+    
+    var progress = navigationState.currentRouteProgress;
+    var totalPoints = navigationState.totalRouteCoordinates.length;
+    var progressPercent = Math.round((progress / totalPoints) * 100);
+    
+    // Calculate remaining distance to destination
+    var remainingDistance = 0;
+    if (progress < totalPoints - 1) {
+        for (var i = progress; i < totalPoints - 1; i++) {
+            var point1 = navigationState.totalRouteCoordinates[i];
+            var point2 = navigationState.totalRouteCoordinates[i + 1];
+            remainingDistance += calculateDistanceBetweenPoints(point1[0], point1[1], point2[0], point2[1]);
+        }
+    }
+    
+    // Get next turn information
+    var instruction = 'Continue straight';
+    var icon = 'fas fa-arrow-up';
+    var nextTurnDistance = 0;
+    
+    // Look ahead for significant turns
+    var lookAheadPoints = Math.min(10, totalPoints - progress - 1);
+    if (lookAheadPoints >= 3) {
+        var currentPoint = navigationState.totalRouteCoordinates[progress];
+        var midPoint = navigationState.totalRouteCoordinates[progress + Math.floor(lookAheadPoints / 2)];
+        var futurePoint = navigationState.totalRouteCoordinates[progress + lookAheadPoints];
+        
+        var currentBearing = calculateBearing(currentPoint[0], currentPoint[1], midPoint[0], midPoint[1]);
+        var futureBearing = calculateBearing(midPoint[0], midPoint[1], futurePoint[0], futurePoint[1]);
+        
+        var turn = getTurnDirection(currentBearing, futureBearing);
+        
+        // Calculate distance to turn
+        for (var i = progress; i < progress + lookAheadPoints && i < totalPoints - 1; i++) {
+            var p1 = navigationState.totalRouteCoordinates[i];
+            var p2 = navigationState.totalRouteCoordinates[i + 1];
+            nextTurnDistance += calculateDistanceBetweenPoints(p1[0], p1[1], p2[0], p2[1]);
+        }
+        
+        if (turn.direction !== 'straight') {
+            icon = turn.icon;
+            if (nextTurnDistance < 50) {
+                instruction = `Turn ${turn.direction} in ${Math.round(nextTurnDistance)}m`;
+            } else if (nextTurnDistance < 200) {
+                instruction = `Prepare to turn ${turn.direction}`;
+            }
+        }
+    }
+    
+    // Context-based instructions
+    if (progressPercent < 10) {
+        instruction = 'Head toward cemetery gate';
+        icon = 'fas fa-map-marker-alt';
+    } else if (progressPercent < 30) {
+        instruction = 'Continue to cemetery entrance';
+        icon = 'fas fa-arrow-up';
+    } else if (progressPercent > 90) {
+        instruction = 'Arrive at destination';
+        icon = 'fas fa-flag-checkered';
+    } else if (remainingDistance < 30) {
+        instruction = 'Approaching destination';
+        icon = 'fas fa-map-marker-alt';
+    }
+    
+    return {
+        icon: icon,
+        instruction: instruction,
+        distance: formatDistance(remainingDistance),
+        progress: progressPercent,
+        nextTurn: nextTurnDistance > 0 ? formatDistance(nextTurnDistance) : null
+    };
+}
+
+/**
+ * Update directions panel with current progress and turn-by-turn navigation
+ */
+function updateDirectionsPanel() {
+    var directionsPanel = document.getElementById('directions-panel');
+    if (!directionsPanel) return;
+    
+    var currentDirection = getCurrentDirectionFromProgress();
+    
+    directionsPanel.innerHTML = `
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <div style="background: #007AFF; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; margin-right: 15px; box-shadow: 0 2px 8px rgba(0,122,255,0.3);">
+                <i class="${currentDirection.icon}" style="color: white; font-size: 20px;"></i>
+            </div>
+            <div style="flex: 1;">
+                <div style="font-weight: bold; color: #333; font-size: 17px; line-height: 1.3;">
+                    ${currentDirection.instruction}
+                </div>
+                <div style="color: #666; font-size: 14px; margin-top: 4px; display: flex; align-items: center; gap: 8px;">
+                    <span style="display: flex; align-items: center;">
+                        <i class="fas fa-location-arrow" style="margin-right: 4px; font-size: 12px; color: #007AFF;"></i>
+                        ${currentDirection.distance}
+                    </span>
+                    ${currentDirection.nextTurn ? `
+                    <span style="display: flex; align-items: center; background: #f8f9fa; padding: 2px 6px; border-radius: 4px;">
+                        <i class="fas fa-route" style="margin-right: 4px; font-size: 11px; color: #6c757d;"></i>
+                        Next: ${currentDirection.nextTurn}
+                    </span>
+                    ` : ''}
+                </div>
+                ${currentDirection.progress ? `
+                <div style="margin-top: 8px;">
+                    <div style="background: #f0f0f0; border-radius: 10px; height: 8px; position: relative; overflow: hidden;">
+                        <div style="background: linear-gradient(90deg, #007AFF, #00C7BE); border-radius: 10px; height: 8px; width: ${currentDirection.progress}%; transition: width 0.5s ease; box-shadow: 0 1px 3px rgba(0,122,255,0.2);"></div>
+                    </div>
+                    <div style="font-size: 12px; color: #999; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+                        <span>${currentDirection.progress}% complete</span>
+                        <span style="font-weight: 500; color: #007AFF;">
+                            <i class="fas fa-clock" style="margin-right: 3px; font-size: 10px;"></i>
+                            ETA: ${getEstimatedTimeArrival()}
+                        </span>
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Calculate estimated time of arrival based on remaining distance and average walking speed
+ */
+function getEstimatedTimeArrival() {
+    if (!navigationState.isActive || navigationState.totalRouteCoordinates.length === 0) {
+        return '--:--';
+    }
+    
+    var progress = navigationState.currentRouteProgress;
+    var totalPoints = navigationState.totalRouteCoordinates.length;
+    
+    // Calculate remaining distance
+    var remainingDistance = 0;
+    if (progress < totalPoints - 1) {
+        for (var i = progress; i < totalPoints - 1; i++) {
+            var point1 = navigationState.totalRouteCoordinates[i];
+            var point2 = navigationState.totalRouteCoordinates[i + 1];
+            remainingDistance += calculateDistanceBetweenPoints(point1[0], point1[1], point2[0], point2[1]);
+        }
+    }
+    
+    // Average walking speed: 1.4 m/s (5 km/h)
+    var walkingSpeed = 1.4;
+    var eta = remainingDistance / walkingSpeed; // seconds
+    
+    if (eta < 60) {
+        return Math.round(eta) + 's';
+    } else {
+        var minutes = Math.floor(eta / 60);
+        var seconds = Math.round(eta % 60);
+        return minutes + 'm ' + (seconds > 0 ? seconds + 's' : '');
+    }
+}
+
+/**
  * Create custom user location icon with FontAwesome
  */
 function createUserIcon() {
@@ -195,7 +569,7 @@ function createDestinationIcon() {
 }
 
 /**
- * Display the routes on the map
+ * Display the routes on the map (initial setup)
  */
 function displayRoutes(routes, userLat, userLng, graveLat, graveLng) {
     // Clear existing routes
@@ -203,6 +577,9 @@ function displayRoutes(routes, userLat, userLng, graveLat, graveLng) {
         map.removeLayer(line);
     });
     navigationState.routeLines = [];
+    
+    // Store route coordinates for progress tracking
+    storeRouteForProgress(routes);
     
     // Add route lines
     routes.forEach(function(route) {
@@ -241,12 +618,199 @@ function displayRoutes(routes, userLat, userLng, graveLat, graveLng) {
 }
 
 /**
- * Start live GPS tracking (updates every 3 seconds)
+ * Update route from current user position dynamically
+ */
+function updateRouteFromCurrentPosition(userLat, userLng) {
+    if (!navigationState.destination || !navigationState.isActive) {
+        return;
+    }
+    
+    // Prevent excessive updates - only update if enough time has passed
+    var now = Date.now();
+    if (navigationState.lastRouteUpdate && (now - navigationState.lastRouteUpdate) < 5000) {
+        console.log('⏱️ Skipping route update - too frequent (last update:', ((now - navigationState.lastRouteUpdate) / 1000).toFixed(1), 's ago)');
+        return;
+    }
+    
+    console.log('🔄 Updating route from current position:', [userLat, userLng]);
+    navigationState.lastRouteUpdate = now;
+    
+    // Show route update indicator
+    showRouteUpdateIndicator();
+    
+    // Create new route from current position to destination
+    var destLat = navigationState.destination.lat;
+    var destLng = navigationState.destination.lng;
+    var gateLat = CEMETERY_GATE.lat;
+    var gateLng = CEMETERY_GATE.lng;
+    
+    // Determine if user is closer to gate or destination
+    var distanceToGate = calculateDistanceBetweenPoints(userLat, userLng, gateLat, gateLng);
+    var distanceToDestination = calculateDistanceBetweenPoints(userLat, userLng, destLat, destLng);
+    
+    // If user is very close to destination (within 100m), route directly
+    if (distanceToDestination < 100) {
+        console.log('📍 User close to destination - routing directly');
+        // Direct route to destination
+        var directRoute = {
+            coordinates: [[userLat, userLng], [destLat, destLng]],
+            distance: distanceToDestination,
+            duration: distanceToDestination / 1.4, // Walking speed
+            color: '#4ECDC4'
+        };
+        
+        displayUpdatedRoute([directRoute], userLat, userLng);
+    }
+    // If user is closer to destination than to gate, skip city routing
+    else if (distanceToDestination < distanceToGate) {
+        console.log('🚶 User inside cemetery - routing via local paths');
+        // Route from current position directly to grave via local OSRM
+        getRoute(
+            userLat, userLng, destLat, destLng,
+            'http://localhost:5000/route/v1/foot',
+            '#4ECDC4',
+            function(cemeteryRoute) {
+                var finalRoute = extendRouteToGrave(cemeteryRoute, destLat, destLng);
+                displayUpdatedRoute([finalRoute], userLat, userLng);
+            }
+        );
+    }
+    // User is still in the city, need two-step routing
+    else {
+        console.log('🚗 User in city - using two-step routing');
+        // Step 1: Route from user to cemetery gate
+        getRoute(
+            userLat, userLng, gateLat, gateLng,
+            'https://router.project-osrm.org/route/v1/driving',
+            '#FF6B6B',
+            function(step1Route) {
+                // Step 2: Route from gate to grave
+                getRoute(
+                    gateLat, gateLng, destLat, destLng,
+                    'http://localhost:5000/route/v1/foot',
+                    '#4ECDC4',
+                    function(step2Route) {
+                        var finalRoute = extendRouteToGrave(step2Route, destLat, destLng);
+                        displayUpdatedRoute([step1Route, finalRoute], userLat, userLng);
+                    }
+                );
+            }
+        );
+    }
+}
+
+/**
+ * Show a brief indicator when route is being updated
+ */
+function showRouteUpdateIndicator() {
+    var indicator = document.createElement('div');
+    indicator.id = 'route-update-indicator';
+    indicator.style.cssText = `
+        position: fixed;
+        top: 80px;
+        left: 20px;
+        background: #4ECDC4;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        z-index: 10000;
+        box-shadow: 0 2px 8px rgba(78,205,196,0.3);
+        animation: fadeInOut 2s ease-in-out;
+    `;
+    indicator.innerHTML = '<i class="fas fa-route" style="margin-right: 6px;"></i>Updating route...';
+    
+    // Remove existing indicator if present
+    var existing = document.getElementById('route-update-indicator');
+    if (existing) {
+        existing.remove();
+    }
+    
+    document.body.appendChild(indicator);
+    
+    setTimeout(function() {
+        if (indicator && indicator.parentNode) {
+            indicator.parentNode.removeChild(indicator);
+        }
+    }, 2000);
+}
+
+/**
+ * Display updated route without changing markers or panels
+ */
+function displayUpdatedRoute(routes, userLat, userLng) {
+    // Clear any existing route lines first
+    navigationState.routeLines.forEach(function(line) {
+        map.removeLayer(line);
+    });
+    navigationState.routeLines = [];
+    
+    // Add new route lines with animation effect
+    routes.forEach(function(route, index) {
+        var routeLine = L.polyline(route.coordinates, {
+            color: route.color,
+            weight: 6,
+            opacity: 0.8
+        }).addTo(map);
+        
+        // Add subtle animation by temporarily changing opacity
+        routeLine.setStyle({ opacity: 0.3 });
+        setTimeout(function() {
+            if (routeLine && map.hasLayer(routeLine)) {
+                routeLine.setStyle({ opacity: 0.8 });
+            }
+        }, 100 * (index + 1));
+        
+        navigationState.routeLines.push(routeLine);
+    });
+    
+    // Update user marker position if needed
+    if (navigationState.userMarker) {
+        navigationState.userMarker.setLatLng([userLat, userLng]);
+    }
+    
+    // Store updated route coordinates for progress tracking
+    storeRouteForProgress(routes);
+    
+    // Update navigation panel with new stats
+    var totalDistance = routes.reduce(function(sum, route) { return sum + route.distance; }, 0);
+    var totalDuration = routes.reduce(function(sum, route) { return sum + route.duration; }, 0);
+    
+    updateNavigationPanelStats(totalDistance, totalDuration);
+    
+    console.log('✅ Route updated dynamically - new route has', routes.length, 'segments');
+}
+
+/**
+ * Update navigation panel stats without recreating the whole panel
+ */
+function updateNavigationPanelStats(totalDistance, totalDuration) {
+    var panel = document.getElementById('nav-panel');
+    if (!panel) return;
+    
+    var distanceKm = (totalDistance / 1000).toFixed(1);
+    var durationMin = Math.round(totalDuration / 60);
+    
+    // Find and update distance and duration elements
+    var distanceElement = panel.querySelector('[data-stat="distance"]');
+    var durationElement = panel.querySelector('[data-stat="duration"]');
+    
+    if (distanceElement) {
+        distanceElement.textContent = distanceKm + ' km';
+    }
+    if (durationElement) {
+        durationElement.textContent = durationMin + ' min';
+    }
+}
+
+/**
+ * Start live GPS tracking (updates every 3 seconds) with dynamic routing
  */
 function startLiveTracking() {
     if (!navigator.geolocation) return;
     
-    console.log('🔄 Starting live GPS tracking (every 3 seconds)');
+    console.log('🔄 Starting live GPS tracking with dynamic routing (every 3 seconds)');
     
     navigationState.watchId = navigator.geolocation.watchPosition(
         function(position) {
@@ -258,6 +822,37 @@ function startLiveTracking() {
                 navigationState.userMarker.setLatLng([newLat, newLng]);
                 
                 console.log('📡 Updated user position:', [newLat, newLng]);
+                
+                // Check if user has moved significantly from last position
+                if (navigationState.lastUserPosition) {
+                    var movedDistance = calculateDistanceBetweenPoints(
+                        newLat, newLng,
+                        navigationState.lastUserPosition.lat,
+                        navigationState.lastUserPosition.lng
+                    );
+                    
+                    // Only process if user has moved more than 5 meters
+                    if (movedDistance > 5) {
+                        // Check for reroute necessity
+                        var needsReroute = checkForReroute(newLat, newLng);
+                        
+                        if (needsReroute) {
+                            triggerReroute(newLat, newLng);
+                        } else {
+                            // Update directions panel with current progress
+                            updateDirectionsPanel();
+                            
+                            // Only update route if user has moved significantly (>20m) and not rerouting
+                            if (movedDistance > 20) {
+                                console.log('🔄 User moved', Math.round(movedDistance), 'm - updating route from current position');
+                                updateRouteFromCurrentPosition(newLat, newLng);
+                            }
+                        }
+                        
+                        // Update last position
+                        navigationState.lastUserPosition = { lat: newLat, lng: newLng };
+                    }
+                }
             }
         },
         function(error) {
@@ -269,6 +864,117 @@ function startLiveTracking() {
             maximumAge: 3000 // 3 second intervals
         }
     );
+}
+
+/**
+ * Start simulating user movement along the route for testing
+ */
+function startRouteSimulation() {
+    if (!navigationState.isActive || navigationState.routeLines.length === 0) {
+        console.warn('⚠️ Cannot start simulation: no active route');
+        return;
+    }
+    
+    // Collect all coordinates from all route segments
+    navigationState.simulationCoordinates = [];
+    navigationState.routeLines.forEach(function(routeLine) {
+        var coords = routeLine.getLatLngs();
+        navigationState.simulationCoordinates = navigationState.simulationCoordinates.concat(coords);
+    });
+    
+    // Start from beginning
+    navigationState.simulationIndex = 0;
+    navigationState.isSimulating = true;
+    
+    console.log('🎬 Starting route simulation with', navigationState.simulationCoordinates.length, 'waypoints');
+    console.log('🏃 Simulating movement every', navigationState.simulationSpeed / 1000, 'seconds');
+    
+    // Start the simulation interval
+    navigationState.simulationInterval = setInterval(function() {
+        if (navigationState.simulationIndex < navigationState.simulationCoordinates.length) {
+            var currentPoint = navigationState.simulationCoordinates[navigationState.simulationIndex];
+            
+            // Update user marker position
+            if (navigationState.userMarker) {
+                navigationState.userMarker.setLatLng(currentPoint);
+                
+                // Update progress tracking for simulation
+                if (navigationState.totalRouteCoordinates.length > 0) {
+                    checkForReroute(currentPoint.lat, currentPoint.lng);
+                    updateDirectionsPanel();
+                }
+                
+                console.log('🎯 Simulated position:', [currentPoint.lat, currentPoint.lng], 
+                           '(Step', navigationState.simulationIndex + 1, 'of', navigationState.simulationCoordinates.length + ')');
+            }
+            
+            navigationState.simulationIndex++;
+        } else {
+            // Reached the end of the route
+            console.log('🏁 Simulation completed - reached destination!');
+            stopRouteSimulation();
+        }
+    }, navigationState.simulationSpeed);
+    
+    // Update the navigation panel to show simulation status
+    updateNavigationPanelForSimulation(true);
+}
+
+/**
+ * Stop route simulation
+ */
+function stopRouteSimulation() {
+    if (navigationState.simulationInterval) {
+        clearInterval(navigationState.simulationInterval);
+        navigationState.simulationInterval = null;
+    }
+    
+    navigationState.isSimulating = false;
+    navigationState.simulationIndex = 0;
+    navigationState.simulationCoordinates = [];
+    
+    console.log('⏹️ Route simulation stopped');
+    
+    // Update the navigation panel to remove simulation status
+    updateNavigationPanelForSimulation(false);
+}
+
+/**
+ * Update navigation panel to show simulation controls
+ */
+function updateNavigationPanelForSimulation(isSimulating) {
+    var panel = document.getElementById('nav-panel');
+    if (!panel) return;
+    
+    var existingSimControls = document.getElementById('sim-controls');
+    if (existingSimControls) {
+        existingSimControls.remove();
+    }
+    
+    if (isSimulating) {
+        var simControls = document.createElement('div');
+        simControls.id = 'sim-controls';
+        simControls.style.cssText = `
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        `;
+        
+        simControls.innerHTML = `
+            <div style="display: flex; align-items: center;">
+                <i class="fas fa-play-circle" style="color: #4CAF50; margin-right: 6px; font-size: 14px;"></i>
+                <span style="font-size: 12px; color: #4CAF50; font-weight: bold;">SIMULATION ACTIVE</span>
+            </div>
+            <button onclick="stopRouteSimulation()" style="background: #FFA726; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 11px;">
+                <i class="fas fa-stop" style="margin-right: 4px;"></i>Stop
+            </button>
+        `;
+        
+        panel.appendChild(simControls);
+    }
 }
 
 /**
@@ -314,16 +1020,26 @@ function showNavigationPanel(totalDistance, totalDuration) {
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <div style="display: flex; align-items: center;">
                 <i class="fas fa-road" style="color: #666; margin-right: 6px; font-size: 14px;"></i>
-                <span style="font-size: 14px; color: #666;">${distanceKm} km</span>
+                <span style="font-size: 14px; color: #666;" data-stat="distance">${distanceKm} km</span>
             </div>
             <div style="display: flex; align-items: center;">
                 <i class="fas fa-clock" style="color: #666; margin-right: 6px; font-size: 14px;"></i>
-                <span style="font-size: 14px; color: #666;">${durationMin} min</span>
+                <span style="font-size: 14px; color: #666;" data-stat="duration">${durationMin} min</span>
             </div>
         </div>
-        <div style="display: flex; align-items: center; font-size: 12px; color: #999;">
-            <i class="fas fa-location-dot" style="margin-right: 6px; color: #4CAF50;"></i>
-            <span>Live tracking enabled</span>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; font-size: 12px; color: #999;">
+                <i class="fas fa-location-dot" style="margin-right: 6px; color: #4CAF50;"></i>
+                <span>Live tracking enabled</span>
+            </div>
+
+
+
+
+
+            <button onclick="startRouteSimulation()" style="background: #2196F3; color: white; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; font-size: 11px;">
+                <i class="fas fa-play" style="margin-right: 4px;"></i>Test Route
+            </button>
         </div>
     `;
     
@@ -332,7 +1048,7 @@ function showNavigationPanel(totalDistance, totalDuration) {
     directionsPanel.id = 'directions-panel';
     directionsPanel.style.cssText = `
         position: fixed;
-        top: 160px;
+        bottom: 20px;
         left: 20px;
         background: white;
         padding: 15px;
@@ -345,7 +1061,7 @@ function showNavigationPanel(totalDistance, totalDuration) {
     `;
     
     // Get current direction
-    var currentDirection = getCurrentDirection();
+    var currentDirection = getCurrentDirectionFromProgress();
     
     directionsPanel.innerHTML = `
         <div style="display: flex; align-items: center; margin-bottom: 10px;">
@@ -367,48 +1083,6 @@ function showNavigationPanel(totalDistance, totalDuration) {
 }
 
 /**
- * Get current navigation direction based on navigation state
- */
-function getCurrentDirection() {
-    // Simple direction logic - you can enhance this based on your route data
-    if (!navigationState.isActive) {
-        return {
-            icon: 'fas fa-map-marker-alt',
-            instruction: 'Start navigation',
-            distance: ''
-        };
-    }
-    
-    // Determine current step based on route progress
-    // For now, showing generic directions - can be enhanced with actual route analysis
-    var directions = [
-        {
-            icon: 'fas fa-arrow-up',
-            instruction: 'Head toward cemetery gate',
-            distance: formatDistance(500) // Example distance
-        },
-        {
-            icon: 'fas fa-arrow-right',
-            instruction: 'Enter cemetery grounds',
-            distance: formatDistance(200)
-        },
-        {
-            icon: 'fas fa-walking',
-            instruction: 'Follow cemetery path',
-            distance: formatDistance(150)
-        },
-        {
-            icon: 'fas fa-flag-checkered',
-            instruction: 'Arrive at destination',
-            distance: formatDistance(50)
-        }
-    ];
-    
-    // Return first direction for now - can be enhanced with GPS-based progress tracking
-    return directions[0];
-}
-
-/**
  * Format distance for display (meters or kilometers)
  */
 function formatDistance(meters) {
@@ -424,6 +1098,11 @@ function formatDistance(meters) {
  */
 function stopNavigation() {
     console.log('🛑 Stopping navigation...');
+    
+    // Stop route simulation if running
+    if (navigationState.isSimulating) {
+        stopRouteSimulation();
+    }
     
     // Stop GPS tracking
     if (navigationState.watchId) {
@@ -457,13 +1136,20 @@ function stopNavigation() {
     // Reset state
     navigationState.isActive = false;
     navigationState.currentRoute = null;
-    
+    navigationState.destination = null;
+    navigationState.lastUserPosition = null;
+    navigationState.routeDeviation = false;
+    navigationState.currentRouteProgress = 0;
+    navigationState.totalRouteCoordinates = [];
+
     console.log('✅ Navigation stopped and cleaned up');
 }
 
 // Make functions globally available
 window.navigateToGrave = navigateToGrave;
 window.stopNavigation = stopNavigation;
+window.startRouteSimulation = startRouteSimulation;
+window.stopRouteSimulation = stopRouteSimulation;
 
 // Add custom marker styles to the page
 (function addMarkerStyles() {
@@ -481,11 +1167,18 @@ window.stopNavigation = stopNavigation;
             justify-content: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             animation: pulse 2s infinite;
+            transition: all 0.3s ease;
         }
 
         .custom-user-marker .user-marker i {
             color: white;
             font-size: 14px;
+        }
+
+        /* Rerouting state for user marker */
+        .custom-user-marker .user-marker.rerouting {
+            background: #FF6B6B;
+            animation: pulse-reroute 1s infinite;
         }
 
         /* Custom destination marker */
@@ -520,6 +1213,27 @@ window.stopNavigation = stopNavigation;
                 box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
             }
         }
+
+        /* Pulse animation for rerouting */
+        @keyframes pulse-reroute {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.8);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(255, 107, 107, 0);
+                transform: scale(1.1);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+                transform: scale(1);
+            }
+        }
+
+        /* Smooth transitions for direction changes */
+        .custom-user-marker {
+            transition: transform 0.5s ease;
+        }
     `;
     document.head.appendChild(style);
 })();
@@ -527,3 +1241,4 @@ window.stopNavigation = stopNavigation;
 console.log('🗺️ Clean Cemetery Navigation System loaded');
 console.log('📍 Cemetery gate set to:', CEMETERY_GATE.lat, CEMETERY_GATE.lng);
 console.log('🎯 Usage: navigateToGrave(lat, lng) or stopNavigation()');
+console.log('🎬 Testing: startRouteSimulation() to simulate movement along route');

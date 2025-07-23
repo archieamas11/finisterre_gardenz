@@ -327,7 +327,7 @@ include_once '../include/database.php';
     <script src="leaflet/map-navbar-functions.js"></script>
     <script src="js/advanced-search.js"></script>
     <!-- <script src="leaflet/get-directions.js"></script> -->
-    <script src="leaflet/navigation-clean.js"></script>
+    <script src="leaflet/get-route.js"></script>
 
     <!-- <script src="js/toggle-legend.js"></script> -->
     <script src="js/map-filter.js"></script>
