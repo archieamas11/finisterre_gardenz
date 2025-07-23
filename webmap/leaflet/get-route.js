@@ -32,7 +32,7 @@ var navigationState = {
     simulationInterval: null,
     simulationIndex: 0,
     simulationCoordinates: [],
-    simulationSpeed: 1000 // milliseconds between moves (2 seconds)
+    simulationSpeed: 1000 // milliseconds between moves (1 seconds)
 };
 
 /**
@@ -96,7 +96,12 @@ function createTwoStepRoute(userLat, userLng, graveLat, graveLng) {
             // Step 2: Route from gate to grave (local OSRM foot profile)
             getRoute(
                 gateLat, gateLng, graveLat, graveLng,
-                'http://localhost:5000/route/v1/foot', // Local OSRM for cemetery walking
+
+                // For local testing
+                // 'http://localhost:5000/route/v1/foot',
+
+                // Production URL for local OSRM
+                'https://finisterreosm-production.up.railway.app/route/v1/foot',
                 '#4ECDC4', // Teal color for cemetery route - change color here
                 function(step2Route) {
                     console.log('✅ Step 2 (Gate→Grave) route found');
