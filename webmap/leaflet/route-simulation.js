@@ -20,22 +20,35 @@ function startRouteSimulation() {
     }
     simulationState.simulationCoordinates = [];
     navigationState.routeLines.forEach(function(routeLine) {
+        // Defensive: getLatLngs() may return nested arrays for multi-segment polylines
         var coords = routeLine.getLatLngs();
+        if (Array.isArray(coords[0])) {
+            // Flatten if needed
+            coords = coords.flat();
+        }
         simulationState.simulationCoordinates = simulationState.simulationCoordinates.concat(coords);
     });
     simulationState.simulationIndex = 0;
     simulationState.isSimulating = true;
     console.log('🎬 Starting route simulation with', simulationState.simulationCoordinates.length, 'waypoints');
+    if (simulationState.simulationCoordinates.length === 0) {
+        console.warn('⚠️ No coordinates to simulate.');
+        simulationState.isSimulating = false;
+        return;
+    }
     simulationState.simulationInterval = setInterval(function() {
         if (simulationState.simulationIndex < simulationState.simulationCoordinates.length) {
             var currentPoint = simulationState.simulationCoordinates[simulationState.simulationIndex];
-            if (navigationState.userMarker) {
-                navigationState.userMarker.setLatLng(currentPoint);
-                if (navigationState.totalRouteCoordinates.length > 0) {
-                    checkForReroute(currentPoint.lat, currentPoint.lng);
+            if (navigationState.userMarker && currentPoint) {
+                // Defensive: support both [lat, lng] and LatLng objects
+                var lat = currentPoint.lat !== undefined ? currentPoint.lat : currentPoint[0];
+                var lng = currentPoint.lng !== undefined ? currentPoint.lng : currentPoint[1];
+                navigationState.userMarker.setLatLng([lat, lng]);
+                if (navigationState.totalRouteCoordinates && navigationState.totalRouteCoordinates.length > 0) {
+                    if (typeof checkForReroute === 'function') checkForReroute(lat, lng);
                     if (typeof updateDirectionsPanel === 'function') updateDirectionsPanel();
                 }
-                console.log('🎯 Simulated position:', [currentPoint.lat, currentPoint.lng], '(Step', simulationState.simulationIndex + 1, 'of', simulationState.simulationCoordinates.length + ')');
+                console.log('🎯 Simulated position:', [lat, lng], '(Step', simulationState.simulationIndex + 1, 'of', simulationState.simulationCoordinates.length + ')');
             }
             simulationState.simulationIndex++;
         } else {

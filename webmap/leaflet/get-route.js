@@ -1,51 +1,43 @@
-/**
- * Custom Routing System
- * Two-step routing: City→Gate (public OSRM) + Gate→Grave (local OSRM)
- * With live GPS tracking every 3 seconds
- */
-
-/** Cemetery main entrance coordinate
-* this will snap the route to the nearest
-* point of this coordinate and switch from 
-* public OSRM to local OSRM **/
+// Cemetery main entrance coordinate
 var CEMETERY_GATE = L.latLng(10.248107820799307, 123.797607547609545);
 
-// Navigation state
+// Navigation state with new properties
 var navigationState = {
     isActive: false,
     watchId: null,
     currentRoute: null,
     userMarker: null,
     routeLines: [],
-    destinationMarker: null
+    destinationMarker: null,
+    destination: null,          // Added to store grave coordinates
+    previousStartPoint: null,  // Added to track last route start
+    isRecalculating: false     // Added to prevent overlapping recalculations
 };
 
-/**
- * Main navigation function - call this with grave coordinates
- */
 function navigateToGrave(graveLat, graveLng) {
     console.log('🚀 Starting two-step navigation to grave:', [graveLat, graveLng]);
-    
+
     if (!navigator.geolocation) {
         alert('GPS not supported by your browser');
         return;
     }
 
-    // Clear any existing navigation
     stopNavigation();
 
-    // Get user's current location
     navigator.geolocation.getCurrentPosition(
-        function(position) {
+        function (position) {
             var userLat = position.coords.latitude;
             var userLng = position.coords.longitude;
-            
+
             console.log('📍 User location:', [userLat, userLng]);
-            
-            // Start two-step routing
+
+            // Set destination and initial start point
+            navigationState.destination = L.latLng(graveLat, graveLng);
+            navigationState.previousStartPoint = L.latLng(userLat, userLng);
+
             createTwoStepRoute(userLat, userLng, graveLat, graveLng);
         },
-        function(error) {
+        function (error) {
             alert('Could not get your location. Please enable GPS and try again.');
             console.error('Geolocation error:', error);
         },
@@ -57,66 +49,56 @@ function navigateToGrave(graveLat, graveLng) {
     );
 }
 
-/**
- * Create the two-step route: City→Gate + Gate→Grave
- */
 function createTwoStepRoute(userLat, userLng, graveLat, graveLng) {
-    console.log('🛣️ Creating two-step route...');
-    
     var gateLat = CEMETERY_GATE.lat;
     var gateLng = CEMETERY_GATE.lng;
-    
-    // Step 1: Route from user to cemetery gate (public OSRM)
+
     getRoute(
         userLat, userLng, gateLat, gateLng,
-        'https://router.project-osrm.org/route/v1/driving', // Public OSRM for city travel
-        '#FF6B6B', // Red color for city route
-        function(step1Route) {
+        'https://router.project-osrm.org/route/v1/driving',
+        '#FF6B6B',
+        function (step1Route) {
             console.log('✅ Step 1 (City→Gate) route found');
-            
-            // Step 2: Route from gate to grave (local OSRM foot profile)
+
             getRoute(
                 gateLat, gateLng, graveLat, graveLng,
-                // For local testing
-                // 'http://localhost:5000/route/v1/foot',
-
-                // Production URL for local OSRM
                 'https://finisterreosm-production.up.railway.app/route/v1/foot',
-                '#4ECDC4', // Teal color for cemetery route
-                function(step2Route) {
+                '#4ECDC4',
+                function (step2Route) {
                     console.log('✅ Step 2 (Gate→Grave) route found');
-                    
-                    // Add final segment from footpath to exact grave location
+
                     var finalRoute = extendRouteToGrave(step2Route, graveLat, graveLng);
-                    
-                    // Display both routes and start tracking
                     displayRoutes([step1Route, finalRoute], userLat, userLng, graveLat, graveLng);
                     startLiveTracking();
+                    // Start route simulation if available
+                    if (typeof startRouteSimulation === 'function') {
+                        setTimeout(function () {
+                            console.log('🎬 Starting route simulation...');
+                            startRouteSimulation();
+                        }, 500);
+                    }
                 }
             );
         }
     );
 }
 
-/**
- * Get route from OSRM service
- */
 function getRoute(startLat, startLng, endLat, endLng, serviceUrl, color, callback) {
-    var url = serviceUrl + '/' + startLng + ',' + startLat + ';' + endLng + ',' + endLat + 
-              '?overview=full&geometries=geojson';
-    
+    var url = serviceUrl + '/' + startLng + ',' + startLat + ';' + endLng + ',' + endLat +
+        '?overview=full&geometries=geojson';
+
     fetch(url)
-        .then(function(response) {
+        .then(function (response) {
             if (!response.ok) throw new Error('Network response was not ok');
             return response.json();
         })
-        .then(function(data) {
+        .then(function (data) {
             if (data.routes && data.routes.length > 0) {
                 var route = data.routes[0];
-                var coordinates = route.geometry.coordinates.map(function(coord) {
-                    return [coord[1], coord[0]]; // Convert [lng, lat] to [lat, lng]
+                var coordinates = route.geometry.coordinates.map(function (coord) {
+                    return [coord[1], coord[0]];
                 });
-                
+
                 callback({
                     coordinates: coordinates,
                     distance: route.distance,
@@ -127,59 +109,44 @@ function getRoute(startLat, startLng, endLat, endLng, serviceUrl, color, callbac
                 throw new Error('No route found');
             }
         })
-        .catch(function(error) {
+        .catch(function (error) {
             console.error('Routing error:', error);
             alert('Could not find route. Please try again.');
         });
 }
 
-/**
- * Extend route to snap directly to the grave location
- * Adds a final segment from the footpath endpoint to the exact grave coordinates
- */
 function extendRouteToGrave(footpathRoute, graveLat, graveLng) {
     var coordinates = footpathRoute.coordinates.slice();
     var lastPoint = coordinates[coordinates.length - 1];
     var lastLat = lastPoint[0];
     var lastLng = lastPoint[1];
-    
-    // Calculate distance between footpath end and grave
+
     var distance = calculateDistanceBetweenPoints(lastLat, lastLng, graveLat, graveLng);
-    
-    // Only add direct connection if grave is more than 2 meters from footpath end
+
     if (distance > 2) {
-        console.log('📍 Adding direct connection to grave (' + distance.toFixed(1) + 'm from footpath)');
-        coordinates.push([graveLat, graveLng]); // Add direct line to grave
-        
-        // Update the route distance and duration
+        coordinates.push([graveLat, graveLng]);
         return {
             coordinates: coordinates,
             distance: footpathRoute.distance + distance,
-            duration: footpathRoute.duration + (distance / 1.4), // Walking speed 1.4 m/s
+            duration: footpathRoute.duration + (distance / 1.4),
             color: footpathRoute.color
         };
     }
-    
+
     return footpathRoute;
 }
 
-/**
- * Calculate distance between two points in meters using Haversine formula
- */
 function calculateDistanceBetweenPoints(lat1, lng1, lat2, lng2) {
-    var R = 6371000; // Earth's radius in meters
+    var R = 6371000;
     var dLat = (lat2 - lat1) * Math.PI / 180;
     var dLng = (lng2 - lng1) * Math.PI / 180;
     var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
 }
 
-/**
- * Create custom user location icon with FontAwesome
- */
 function createUserIcon() {
     return L.divIcon({
         html: '<div class="user-marker"><i class="fas fa-user"></i></div>',
@@ -189,9 +156,6 @@ function createUserIcon() {
     });
 }
 
-/**
- * Create custom destination icon with FontAwesome
- */
 function createDestinationIcon() {
     return L.divIcon({
         html: '<div class="destination-marker"><i class="fas fa-map-marker-alt"></i></div>',
@@ -201,33 +165,32 @@ function createDestinationIcon() {
     });
 }
 
-/**
- * Display the routes on the map
- */
 function displayRoutes(routes, userLat, userLng, graveLat, graveLng) {
-    // Clear existing routes
-    navigationState.routeLines.forEach(function(line) {
+    if (navigationState.userMarker) {
+        map.removeLayer(navigationState.userMarker);
+    }
+    if (navigationState.destinationMarker) {
+        map.removeLayer(navigationState.destinationMarker);
+    }
+
+    navigationState.routeLines.forEach(function (line) {
         map.removeLayer(line);
     });
     navigationState.routeLines = [];
-    
-    // Add user marker (styled with FontAwesome icon - change style here)
+
     navigationState.userMarker = L.marker([userLat, userLng], {
         icon: createUserIcon()
     }).addTo(map);
 
-    // Add destination marker (styled map pin - change style here)
     navigationState.destinationMarker = L.marker([graveLat, graveLng], {
         icon: createDestinationIcon()
     }).addTo(map);
 
-    // Snap the first route's starting point to the user marker location
     if (routes.length > 0 && routes[0].coordinates.length > 0) {
         routes[0].coordinates[0] = [userLat, userLng];
     }
 
-    // Add route lines
-    routes.forEach(function(route) {
+    routes.forEach(function (route) {
         var routeLine = L.polyline(route.coordinates, {
             color: route.color,
             weight: 6,
@@ -236,82 +199,93 @@ function displayRoutes(routes, userLat, userLng, graveLat, graveLng) {
         navigationState.routeLines.push(routeLine);
     });
 
-    // Fit map to show full route
     var group = L.featureGroup([
         navigationState.userMarker,
         navigationState.destinationMarker
     ].concat(navigationState.routeLines));
     map.fitBounds(group.getBounds().pad(0.1));
 
-    // Calculate total stats
-    var totalDistance = routes.reduce(function(sum, route) { return sum + route.distance; }, 0);
-    var totalDuration = routes.reduce(function(sum, route) { return sum + route.duration; }, 0);
+    var totalDistance = routes.reduce(function (sum, route) { return sum + route.distance; }, 0);
+    var totalDuration = routes.reduce(function (sum, route) { return sum + route.duration; }, 0);
 
     showNavigationPanel(totalDistance, totalDuration);
     navigationState.isActive = true;
+
+    // Update previous start point and reset recalculating flag
+    navigationState.previousStartPoint = L.latLng(userLat, userLng);
+    navigationState.isRecalculating = false;
 }
 
-/**
- * Start live GPS tracking (updates every 3 seconds)
- */
 function startLiveTracking() {
     if (!navigator.geolocation) return;
-    
+
+    if (navigationState.watchId) {
+        console.log('Live tracking already active');
+        return;
+    }
+
     console.log('🔄 Starting live GPS tracking (every 3 seconds)');
-    
+
     navigationState.watchId = navigator.geolocation.watchPosition(
-        function(position) {
+        function (position) {
             if (navigationState.isActive && navigationState.userMarker) {
                 var newLat = position.coords.latitude;
                 var newLng = position.coords.longitude;
-                
+
                 // Update user marker position
                 navigationState.userMarker.setLatLng([newLat, newLng]);
-                
+
                 console.log('📡 Updated user position:', [newLat, newLng]);
+
+                // Check distance from previous start point and recalculate if needed
+                if (navigationState.previousStartPoint && navigationState.destination) {
+                    var distance = calculateDistanceBetweenPoints(
+                        newLat, newLng,
+                        navigationState.previousStartPoint.lat,
+                        navigationState.previousStartPoint.lng
+                    );
+
+                    if (distance > 20 && !navigationState.isRecalculating) {
+                        console.log('🚧 User drifted > 20m, recalculating route...');
+                        navigationState.isRecalculating = true;
+                        createTwoStepRoute(
+                            newLat, newLng,
+                            navigationState.destination.lat,
+                            navigationState.destination.lng
+                        );
+                    }
+                }
             }
         },
-        function(error) {
+        function (error) {
             console.warn('Live tracking error:', error);
         },
         {
             enableHighAccuracy: true,
             timeout: 5000,
-            maximumAge: 3000 // 3 second intervals
+            maximumAge: 3000
         }
     );
 }
 
-/**
- * Show navigation info panel with Font Awesome icons and directions
- */
 function showNavigationPanel(totalDistance, totalDuration) {
     var distanceKm = (totalDistance / 1000).toFixed(1);
     var durationMin = Math.round(totalDuration / 60);
-    
-    // Remove existing panels
+
     var existingPanel = document.getElementById('nav-panel');
     var existingDirections = document.getElementById('directions-panel');
     if (existingPanel) existingPanel.remove();
     if (existingDirections) existingDirections.remove();
-    
-    // Create main navigation panel
+
     var panel = document.createElement('div');
     panel.id = 'nav-panel';
     panel.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 1000;
-        font-family: Arial, sans-serif;
-        min-width: 280px;
+        position: fixed; bottom: 20px; left: 20px; background: white;
+        padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000; font-family: Arial, sans-serif; min-width: 280px;
         border: 1px solid #e0e0e0;
     `;
-    
+
     panel.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <div style="display: flex; align-items: center;">
@@ -340,9 +314,6 @@ function showNavigationPanel(totalDistance, totalDuration) {
     document.body.appendChild(panel);
 }
 
-/**
- * Format distance for display (meters or kilometers)
- */
 function formatDistance(meters) {
     if (meters < 1000) {
         return Math.round(meters) + 'm';
@@ -351,104 +322,69 @@ function formatDistance(meters) {
     }
 }
 
-/**
- * Stop navigation and clean up everything
- */
-function stopNavigation() {    
-    // Stop GPS tracking
+function stopNavigation() {
     if (navigationState.watchId) {
         navigator.geolocation.clearWatch(navigationState.watchId);
         navigationState.watchId = null;
     }
-    
-    // Remove route lines
-    navigationState.routeLines.forEach(function(line) {
+
+    navigationState.routeLines.forEach(function (line) {
         map.removeLayer(line);
     });
     navigationState.routeLines = [];
-    
-    // Remove markers
+
     if (navigationState.userMarker) {
         map.removeLayer(navigationState.userMarker);
         navigationState.userMarker = null;
     }
-    
+
     if (navigationState.destinationMarker) {
         map.removeLayer(navigationState.destinationMarker);
         navigationState.destinationMarker = null;
     }
-    
-    // Remove info panels
+
     var panel = document.getElementById('nav-panel');
     var directionsPanel = document.getElementById('directions-panel');
     if (panel) panel.remove();
     if (directionsPanel) directionsPanel.remove();
-    
-    // Reset state
+
     navigationState.isActive = false;
     navigationState.currentRoute = null;
-    
+    navigationState.destination = null;
+    navigationState.previousStartPoint = null;
+    navigationState.isRecalculating = false;
+
     console.log('✅ Navigation stopped and cleaned up');
 }
 
-// Make functions globally available
 window.navigateToGrave = navigateToGrave;
 window.stopNavigation = stopNavigation;
 
-// Add custom marker styles to the page
 (function addMarkerStyles() {
     var style = document.createElement('style');
     style.textContent = `
-        /* Custom user location marker */
         .custom-user-marker .user-marker {
-            background: #4CAF50;
-            border: 3px solid #fff;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            background: #4CAF50; border: 3px solid #fff; border-radius: 50%;
+            width: 30px; height: 30px; display: flex; align-items: center;
+            justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             animation: pulse 2s infinite;
         }
-
         .custom-user-marker .user-marker i {
-            color: white;
-            font-size: 14px;
+            color: white; font-size: 14px;
         }
-
-        /* Custom destination marker */
         .custom-destination-marker .destination-marker {
-            background: #f44336;
-            border: 2px solid #fff;
-            border-radius: 50% 50% 50% 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            background: #f44336; border: 2px solid #fff; border-radius: 50% 50% 50% 0;
+            width: 30px; height: 30px; display: flex; align-items: center;
+            justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             transform: rotate(-45deg);
         }
-
         .custom-destination-marker .destination-marker i {
-            color: white;
-            font-size: 16px;
-            transform: rotate(45deg);
+            color: white; font-size: 16px; transform: rotate(45deg);
         }
-
-        /* Pulse animation for user marker */
         @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
-            }
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
         }
     `;
     document.head.appendChild(style);
