@@ -1,7 +1,10 @@
 // Cemetery main entrance coordinate
 var CEMETERY_GATE = L.latLng(10.248107820799307, 123.797607547609545);
 
-// Navigation state with new properties
+// Test grave location for simulation
+var TEST_GRAVE = L.latLng(10.247500, 123.798000);
+
+// Navigation state with improved properties
 var navigationState = {
     isActive: false,
     watchId: null,
@@ -10,8 +13,13 @@ var navigationState = {
     routeLines: [],
     destinationMarker: null,
     destination: null,
-    previousStartPoint: null,
-    isRecalculating: false
+    previousUserPosition: null,
+    isRecalculating: false,
+    simulationActive: false,
+    simulationIndex: 0,
+    simulationPath: [],
+    simulationInterval: null,
+    routeStartPoint: null
 };
 
 function navigateToGrave(graveLat, graveLng) {
@@ -20,6 +28,7 @@ function navigateToGrave(graveLat, graveLng) {
         return;
     }
 
+    console.log('🧭 Starting navigation to grave:', graveLat, graveLng);
     stopNavigation();
 
     navigator.geolocation.getCurrentPosition(
@@ -29,7 +38,8 @@ function navigateToGrave(graveLat, graveLng) {
 
             // Set destination and initial start point
             navigationState.destination = L.latLng(graveLat, graveLng);
-            navigationState.previousStartPoint = L.latLng(userLat, userLng);
+            navigationState.previousUserPosition = L.latLng(userLat, userLng);
+            navigationState.routeStartPoint = L.latLng(userLat, userLng);
 
             createTwoStepRoute(userLat, userLng, graveLat, graveLng);
         },
@@ -46,36 +56,49 @@ function navigateToGrave(graveLat, graveLng) {
 }
 
 function createTwoStepRoute(userLat, userLng, graveLat, graveLng) {
+    console.log('🛣️ Creating two-step route...');
     var gateLat = CEMETERY_GATE.lat;
     var gateLng = CEMETERY_GATE.lng;
 
+    // Step 1: Car route from user to cemetery gate
     getRoute(
         userLat, userLng, gateLat, gateLng,
         'https://router.project-osrm.org/route/v1/driving',
         '#FF6B6B',
         function (step1Route) {
+            console.log('🚗 Car route calculated');
+            // Step 2: Walking route from gate to grave
             getRoute(
                 gateLat, gateLng, graveLat, graveLng,
                 'https://finisterreosm-production.up.railway.app/route/v1/foot',
                 '#4ECDC4',
                 function (step2Route) {
+                    console.log('🚶 Walking route calculated');
                     var finalRoute = extendRouteToGrave(step2Route, graveLat, graveLng);
                     displayRoutes([step1Route, finalRoute], userLat, userLng, graveLat, graveLng);
                     startLiveTracking();
-                    // Start route simulation for testing purposes
-                    if (typeof startRouteSimulation === 'function') {
-                        setTimeout(function () {
-                            console.log('🎬 Starting route simulation...');
+                    
+                    // Auto-start simulation for testing
+                    setTimeout(function () {
+                        if (typeof startRouteSimulation === 'function') {
+                            console.log('🎬 Auto-starting route simulation...');
                             startRouteSimulation();
-                        }, 500);
-                    }
+                        }
+                    }, 1000);
+                },
+                function() {
+                    // Fallback: create direct walking route if OSRM walking fails
+                    console.warn('Walking route failed, creating direct route');
+                    var directRoute = createDirectRoute(gateLat, gateLng, graveLat, graveLng, '#4ECDC4');
+                    displayRoutes([step1Route, directRoute], userLat, userLng, graveLat, graveLng);
+                    startLiveTracking();
                 }
             );
         }
     );
 }
 
-function getRoute(startLat, startLng, endLat, endLng, serviceUrl, color, callback) {
+function getRoute(startLat, startLng, endLat, endLng, serviceUrl, color, successCallback, errorCallback) {
     var url = serviceUrl + '/' + startLng + ',' + startLat + ';' + endLng + ',' + endLat +
         '?overview=full&geometries=geojson';
 
@@ -91,7 +114,7 @@ function getRoute(startLat, startLng, endLat, endLng, serviceUrl, color, callbac
                     return [coord[1], coord[0]];
                 });
 
-                callback({
+                successCallback({
                     coordinates: coordinates,
                     distance: route.distance,
                     duration: route.duration,
@@ -103,8 +126,24 @@ function getRoute(startLat, startLng, endLat, endLng, serviceUrl, color, callbac
         })
         .catch(function (error) {
             console.error('Routing error:', error);
-            alert('Could not find route. Please try again.');
+            if (errorCallback) {
+                errorCallback(error);
+            } else {
+                alert('Could not find route. Please try again.');
+            }
         });
+}
+
+function createDirectRoute(startLat, startLng, endLat, endLng, color) {
+    var coordinates = [[startLat, startLng], [endLat, endLng]];
+    var distance = calculateDistanceBetweenPoints(startLat, startLng, endLat, endLng);
+    
+    return {
+        coordinates: coordinates,
+        distance: distance,
+        duration: distance / 1.4, // Walking speed ~1.4 m/s
+        color: color
+    };
 }
 
 function extendRouteToGrave(footpathRoute, graveLat, graveLng) {
@@ -129,7 +168,7 @@ function extendRouteToGrave(footpathRoute, graveLat, graveLng) {
 }
 
 function calculateDistanceBetweenPoints(lat1, lng1, lat2, lng2) {
-    var R = 6371000;
+    var R = 6371000; // Earth's radius in meters
     var dLat = (lat2 - lat1) * Math.PI / 180;
     var dLng = (lng2 - lng1) * Math.PI / 180;
     var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -158,30 +197,24 @@ function createDestinationIcon() {
 }
 
 function displayRoutes(routes, userLat, userLng, graveLat, graveLng) {
-    if (navigationState.userMarker) {
-        map.removeLayer(navigationState.userMarker);
-    }
-    if (navigationState.destinationMarker) {
-        map.removeLayer(navigationState.destinationMarker);
-    }
+    clearRouteDisplay();
 
-    navigationState.routeLines.forEach(function (line) {
-        map.removeLayer(line);
-    });
-    navigationState.routeLines = [];
-
+    // Create user marker
     navigationState.userMarker = L.marker([userLat, userLng], {
         icon: createUserIcon()
     }).addTo(map);
 
+    // Create destination marker
     navigationState.destinationMarker = L.marker([graveLat, graveLng], {
         icon: createDestinationIcon()
     }).addTo(map);
 
+    // Update first route point to current user location
     if (routes.length > 0 && routes[0].coordinates.length > 0) {
         routes[0].coordinates[0] = [userLat, userLng];
     }
 
+    // Draw route lines
     routes.forEach(function (route) {
         var routeLine = L.polyline(route.coordinates, {
             color: route.color,
@@ -191,49 +224,72 @@ function displayRoutes(routes, userLat, userLng, graveLat, graveLng) {
         navigationState.routeLines.push(routeLine);
     });
 
+    // Fit map to show all elements
     var group = L.featureGroup([
         navigationState.userMarker,
         navigationState.destinationMarker
     ].concat(navigationState.routeLines));
     map.fitBounds(group.getBounds().pad(0.1));
 
+    // Calculate totals and show panel
     var totalDistance = routes.reduce(function (sum, route) { return sum + route.distance; }, 0);
     var totalDuration = routes.reduce(function (sum, route) { return sum + route.duration; }, 0);
 
     showNavigationPanel(totalDistance, totalDuration);
     navigationState.isActive = true;
-
-    // Update previous start point and reset recalculating flag
-    navigationState.previousStartPoint = L.latLng(userLat, userLng);
+    navigationState.previousUserPosition = L.latLng(userLat, userLng);
+    navigationState.routeStartPoint = L.latLng(userLat, userLng);
     navigationState.isRecalculating = false;
+    
+    console.log('✅ Routes displayed successfully');
+}
+
+function clearRouteDisplay() {
+    // Remove existing markers
+    if (navigationState.userMarker) {
+        map.removeLayer(navigationState.userMarker);
+        navigationState.userMarker = null;
+    }
+    if (navigationState.destinationMarker) {
+        map.removeLayer(navigationState.destinationMarker);
+        navigationState.destinationMarker = null;
+    }
+
+    // Remove existing route lines
+    navigationState.routeLines.forEach(function (line) {
+        map.removeLayer(line);
+    });
+    navigationState.routeLines = [];
 }
 
 function startLiveTracking() {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation || navigationState.watchId) return;
 
-    if (navigationState.watchId) {
-        return;
-    }
+    console.log('📡 Starting live GPS tracking...');
 
     navigationState.watchId = navigator.geolocation.watchPosition(
         function (position) {
-            if (navigationState.isActive && navigationState.userMarker) {
+            if (navigationState.isActive && navigationState.userMarker && !navigationState.simulationActive) {
                 var newLat = position.coords.latitude;
                 var newLng = position.coords.longitude;
+                var newPosition = L.latLng(newLat, newLng);
 
                 // Update user marker position
-                navigationState.userMarker.setLatLng([newLat, newLng]);
+                navigationState.userMarker.setLatLng(newPosition);
 
-                // Check distance from previous start point and recalculate if needed
-                if (navigationState.previousStartPoint && navigationState.destination) {
-                    var distance = calculateDistanceBetweenPoints(
+                // Update route starting point and remove passed segments
+                updateRouteProgress(newLat, newLng);
+
+                // Check for drift and recalculate if needed
+                if (navigationState.previousUserPosition && navigationState.destination) {
+                    var driftDistance = calculateDistanceBetweenPoints(
                         newLat, newLng,
-                        navigationState.previousStartPoint.lat,
-                        navigationState.previousStartPoint.lng
+                        navigationState.previousUserPosition.lat,
+                        navigationState.previousUserPosition.lng
                     );
 
-                    if (distance > 20 && !navigationState.isRecalculating) {
-                        console.log('🚧 User drifted > 20m, recalculating route...');
+                    if (driftDistance > 30 && !navigationState.isRecalculating) {
+                        console.log('🚧 User drifted > 30m, recalculating route...');
                         navigationState.isRecalculating = true;
                         createTwoStepRoute(
                             newLat, newLng,
@@ -242,6 +298,9 @@ function startLiveTracking() {
                         );
                     }
                 }
+
+                // Update route start point for smooth line updates
+                navigationState.routeStartPoint = newPosition;
             }
         },
         function (error) {
@@ -250,9 +309,82 @@ function startLiveTracking() {
         {
             enableHighAccuracy: true,
             timeout: 5000,
-            maximumAge: 3000
+            maximumAge: 1000 // Update every second
         }
     );
+}
+
+function findClosestPointOnRoute(userPosition, routePoints) {
+    var closestIndex = 0;
+    var minDistance = userPosition.distanceTo(routePoints[0]);
+    
+    for (var i = 1; i < routePoints.length; i++) {
+        var distance = userPosition.distanceTo(routePoints[i]);
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestIndex = i;
+        }
+    }
+    
+    return closestIndex;
+}
+
+function updateRouteProgress(newLat, newLng) {
+    if (navigationState.routeLines.length === 0) return;
+    
+    var userPosition = L.latLng(newLat, newLng);
+    
+    // Check each route line for progress
+    for (var i = 0; i < navigationState.routeLines.length; i++) {
+        var routeLine = navigationState.routeLines[i];
+        var currentLatLngs = routeLine.getLatLngs();
+        
+        if (currentLatLngs.length === 0) continue;
+        
+        // Find the closest point on this route and remove passed points
+        var closestIndex = findClosestPointOnRoute(userPosition, currentLatLngs);
+        var distanceToClosest = userPosition.distanceTo(currentLatLngs[closestIndex]);
+        
+        // If user is close to this route (within 50m), update progress
+        if (distanceToClosest <= 50) {
+            // Remove all points before the closest point (user has passed them)
+            var remainingPoints = currentLatLngs.slice(closestIndex);
+            
+            // Set current user position as the first point
+            remainingPoints[0] = userPosition;
+            
+            // Update the route line with only remaining points
+            routeLine.setLatLngs(remainingPoints);
+            
+            console.log(`📍 Route progress: removed ${closestIndex} passed points from route ${i + 1}`);
+            
+            // If this route is now very short (< 10m), consider removing it entirely
+            if (remainingPoints.length <= 2) {
+                var totalRemainingDistance = 0;
+                for (var j = 0; j < remainingPoints.length - 1; j++) {
+                    totalRemainingDistance += remainingPoints[j].distanceTo(remainingPoints[j + 1]);
+                }
+                
+                if (totalRemainingDistance < 10) {
+                    console.log(`🏁 Route ${i + 1} completed, removing...`);
+                    map.removeLayer(routeLine);
+                    navigationState.routeLines.splice(i, 1);
+                    i--; // Adjust index after removal
+                }
+            }
+            break; // Only update one route at a time
+            
+        } else if (i === 0) {
+            // For the first route, always update start point even if user is far
+            currentLatLngs[0] = userPosition;
+            routeLine.setLatLngs(currentLatLngs);
+        }
+    }
+}
+
+function updateRouteStartPoint(newLat, newLng) {
+    // Legacy function - now handled by updateRouteProgress
+    updateRouteProgress(newLat, newLng);
 }
 
 function showNavigationPanel(totalDistance, totalDuration) {
@@ -291,10 +423,113 @@ function showNavigationPanel(totalDistance, totalDuration) {
             <i class="fas fa-location-dot"></i>
             <span>Live tracking enabled</span>
         </div>
+        ${navigationState.simulationActive ? '<div class="cemetery-nav-mode">🎬 Simulation Mode</div>' : ''}
     `;
     document.body.appendChild(panel);
 }
 
+function stopNavigation() {
+    console.log('🛑 Stopping navigation...');
+    
+    // Stop GPS tracking
+    if (navigationState.watchId) {
+        navigator.geolocation.clearWatch(navigationState.watchId);
+        navigationState.watchId = null;
+    }
+
+    // Stop simulation
+    stopRouteSimulation();
+
+    // Clear display
+    clearRouteDisplay();
+
+    // Remove panels
+    var panel = document.getElementById('nav-panel');
+    var directionsPanel = document.getElementById('directions-panel');
+    if (panel) panel.remove();
+    if (directionsPanel) directionsPanel.remove();
+
+    // Reset state
+    navigationState.isActive = false;
+    navigationState.currentRoute = null;
+    navigationState.destination = null;
+    navigationState.previousUserPosition = null;
+    navigationState.isRecalculating = false;
+    navigationState.routeStartPoint = null;
+}
+
+// SIMULATION MODE FOR TESTING
+function startRouteSimulation() {
+    if (!navigationState.isActive || navigationState.routeLines.length === 0) {
+        console.warn('Cannot start simulation: navigation not active');
+        return;
+    }
+
+    console.log('🎬 Starting route simulation...');
+    navigationState.simulationActive = true;
+    navigationState.simulationIndex = 0;
+    navigationState.simulationPath = [];
+
+    // Collect all route points
+    navigationState.routeLines.forEach(function(routeLine) {
+        var latLngs = routeLine.getLatLngs();
+        latLngs.forEach(function(latLng) {
+            navigationState.simulationPath.push(latLng);
+        });
+    });
+
+    // Update navigation panel to show simulation mode
+    showNavigationPanel(1000, 600); // Dummy values for simulation
+
+    // Start simulation interval
+    navigationState.simulationInterval = setInterval(function() {
+        if (navigationState.simulationIndex < navigationState.simulationPath.length) {
+            var currentPoint = navigationState.simulationPath[navigationState.simulationIndex];
+            
+            // Update user marker position
+            if (navigationState.userMarker) {
+                navigationState.userMarker.setLatLng(currentPoint);
+                
+                // Update route progress and remove passed segments
+                updateRouteProgress(currentPoint.lat, currentPoint.lng);
+                
+                // Center map on current position
+                map.panTo(currentPoint);
+            }
+            
+            navigationState.simulationIndex++;
+            console.log(`🎬 Simulation step ${navigationState.simulationIndex}/${navigationState.simulationPath.length}`);
+        } else {
+            // Simulation complete
+            stopRouteSimulation();
+            console.log('🏁 Simulation completed!');
+        }
+    }, 200); // Move every 200ms
+}
+
+function stopRouteSimulation() {
+    if (navigationState.simulationInterval) {
+        clearInterval(navigationState.simulationInterval);
+        navigationState.simulationInterval = null;
+    }
+    navigationState.simulationActive = false;
+    navigationState.simulationIndex = 0;
+    navigationState.simulationPath = [];
+    console.log('🛑 Simulation stopped');
+    
+    // Update panel to remove simulation mode indicator
+    if (navigationState.isActive) {
+        showNavigationPanel(1000, 600); // Refresh panel without simulation mode
+    }
+}
+
+// TEST FUNCTION
+function testNavigation() {
+    console.log('🧪 Starting test navigation...');
+    navigateToGrave(TEST_GRAVE.lat, TEST_GRAVE.lng);
+}
+
+// Format distance helper
 function formatDistance(meters) {
     if (meters < 1000) {
         return Math.round(meters) + 'm';
@@ -303,39 +538,9 @@ function formatDistance(meters) {
     }
 }
 
-function stopNavigation() {
-    if (navigationState.watchId) {
-        navigator.geolocation.clearWatch(navigationState.watchId);
-        navigationState.watchId = null;
-    }
-
-    navigationState.routeLines.forEach(function (line) {
-        map.removeLayer(line);
-    });
-    navigationState.routeLines = [];
-
-    if (navigationState.userMarker) {
-        map.removeLayer(navigationState.userMarker);
-        navigationState.userMarker = null;
-    }
-
-    if (navigationState.destinationMarker) {
-        map.removeLayer(navigationState.destinationMarker);
-        navigationState.destinationMarker = null;
-    }
-
-    var panel = document.getElementById('nav-panel');
-    var directionsPanel = document.getElementById('directions-panel');
-    if (panel) panel.remove();
-    if (directionsPanel) directionsPanel.remove();
-
-    navigationState.isActive = false;
-    navigationState.currentRoute = null;
-    navigationState.destination = null;
-    navigationState.previousStartPoint = null;
-    navigationState.isRecalculating = false;
-}
-
+// Export functions to global scope
 window.navigateToGrave = navigateToGrave;
 window.stopNavigation = stopNavigation;
-
+window.startRouteSimulation = startRouteSimulation;
+window.stopRouteSimulation = stopRouteSimulation;
+window.testNavigation = testNavigation;
