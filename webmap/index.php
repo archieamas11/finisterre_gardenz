@@ -320,7 +320,6 @@ include_once '../include/database.php';
     <script src="data/entrance_6.js"></script>
     <script src="data/exit_7.js"></script>
     <script src="data/playground_1.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
     <!-- Leaflet Map -->
     <script src="leaflet/popup-utils.js"></script>
@@ -332,6 +331,8 @@ include_once '../include/database.php';
     <!-- <script src="js/toggle-legend.js"></script> -->
     <script src="js/map-filter.js"></script>
     <script src="js/Leaflet.AnimatedSearchBox.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
     <script> lucide.createIcons(); </script>
 
     <?php include __DIR__ . '/finisterre_map.php'; ?>
