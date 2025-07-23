@@ -1,10 +1,13 @@
 /**
- * Clean Cemetery Navigation System
+ * Custom Routing System
  * Two-step routing: City→Gate (public OSRM) + Gate→Grave (local OSRM)
  * With live GPS tracking every 3 seconds
  */
 
-// Cemetery gate coordinate - change this to adjust entry point
+/** Cemetery main entrance coordinate
+* this will snap the route to the nearest
+* point of this coordinate and switch from 
+* public OSRM to local OSRM **/
 var CEMETERY_GATE = L.latLng(10.248107820799307, 123.797607547609545);
 
 // Navigation state
@@ -33,7 +36,7 @@ var navigationState = {
 };
 
 /**
- * Main navigation function - call this with grave coordinates
+ * Main navigation function - called in get-direction button
  */
 function navigateToGrave(graveLat, graveLng) {
     console.log('🚀 Starting two-step navigation to grave:', [graveLat, graveLng]);
