@@ -74,14 +74,6 @@ function createTwoStepRoute(userLat, userLng, graveLat, graveLng) {
                     var finalRoute = extendRouteToGrave(step2Route, graveLat, graveLng);
                     displayRoutes([step1Route, finalRoute], userLat, userLng, graveLat, graveLng);
                     startLiveTracking();
-                    
-                    // Auto-start simulation for testing
-                    // setTimeout(function () {
-                    //     if (typeof startRouteSimulation === 'function') {
-                    //         console.log('🎬 Auto-starting route simulation...');
-                    //         startRouteSimulation();
-                    //     }
-                    // }, 1000);
                 },
                 function() {
                     // Fallback: create direct walking route if OSRM walking fails
@@ -186,10 +178,10 @@ function createUserIcon() {
 
 function createDestinationIcon() {
     return L.divIcon({
-        html: '<div class="destination-marker"><i class="fas fa-map-marker-alt"></i></div>',
+        html: '<div class="marker-style target-destination"><i class="fas fa-map-marker-alt"></i></div>',
         className: 'custom-destination-marker',
         iconSize: [30, 30],
-        iconAnchor: [15, 30]
+        iconAnchor: [15, 34]
     });
 }
 
@@ -416,11 +408,6 @@ function showNavigationPanel(totalDistance, totalDuration) {
                 <span>${durationMin} min</span>
             </div>
         </div>
-        <div class="cemetery-nav-status">
-            <i class="fas fa-location-dot"></i>
-            <span>Live tracking enabled</span>
-        </div>
-        ${navigationState.simulationActive ? '<div class="cemetery-nav-mode">🎬 Simulation Mode</div>' : ''}
     `;
     document.body.appendChild(panel);
 }
@@ -467,6 +454,3 @@ function formatDistance(meters) {
 // Export functions to global scope
 window.navigateToGrave = navigateToGrave;
 window.stopNavigation = stopNavigation;
-window.startRouteSimulation = startRouteSimulation;
-window.stopRouteSimulation = stopRouteSimulation;
-window.testNavigation = testNavigation;

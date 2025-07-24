@@ -78,11 +78,10 @@ function pop_Chapel_1(feature, layer) {
 function style_Chapel_1_0() {
     return {
         pane: 'pane_Chapel_1',
-        rotationAngle: 0.7155853000000001,
         rotationOrigin: 'center center',
-        icon: L.icon({
-            iconUrl: 'markers/Chapel_1.svg',
-            iconSize: [27.36, 27.36]
+        icon: L.divIcon({
+            html: '<div class="marker-style chapel"><i class="fa-solid fa-church"></i></div>',
+            className: 'chapel-marker-style',
         }),
         interactive: true,
     }
@@ -142,9 +141,9 @@ function style_parking_2_0() {
         pane: 'pane_parking_2',
         rotationAngle: 0.0,
         rotationOrigin: 'center center',
-        icon: L.icon({
-            iconUrl: 'markers/parking_2.svg',
-            iconSize: [27.36, 27.36]
+        icon: L.divIcon({
+            html: '<div class="marker-style parking"><i class="fa-solid fa-p"></i></div>',
+            className: 'parking-marker-style',
         }),
         interactive: true,
     }

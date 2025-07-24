@@ -44,7 +44,7 @@ function startRouteSimulation() {
             stopRouteSimulation();
             console.log('🏁 Simulation completed!');
         }
-    }, 200); // Move every 200ms
+    }, 500);
 }
 
 function stopRouteSimulation() {
@@ -62,3 +62,6 @@ function stopRouteSimulation() {
         showNavigationPanel(1000, 600); // Refresh panel without simulation mode
     }
 }
+
+window.startRouteSimulation = startRouteSimulation;
+window.stopRouteSimulation = stopRouteSimulation;

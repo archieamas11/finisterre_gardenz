@@ -318,10 +318,6 @@ include_once '../include/database.php';
                     <span id="cemetery-nav-duration-value">0 min</span>
                 </div>
             </div>
-            <div class="cemetery-nav-status">
-                <i class="fas fa-location-dot"></i>
-                <span>Live tracking enabled</span>
-            </div>
         </div>
     </main>
     <script src="js/qgis2web_expressions.js"></script>

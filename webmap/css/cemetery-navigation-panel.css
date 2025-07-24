@@ -109,8 +109,7 @@
     font-size: 14px;
 }
 
-.custom-destination-marker .destination-marker {
-    background: #f44336;
+.marker-style {
     border: 2px solid #fff;
     border-radius: 50% 50% 50% 0;
     width: 30px;
@@ -122,7 +121,25 @@
     transform: rotate(-45deg);
 }
 
-.custom-destination-marker .destination-marker i {
+.custom-destination-marker {
+    background-color: transparent;
+}
+
+.marker-style.chapel {
+    background: #FF9800;
+}
+
+.marker-style.parking {
+    background: #202020;
+    width: 25px !important;
+    height: 25px !important;
+}
+
+.marker-style.target-destination {
+    background: #f44336;
+}
+
+.marker-style i {
     color: white;
     font-size: 16px;
     transform: rotate(45deg);
